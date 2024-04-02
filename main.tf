@@ -10,3 +10,11 @@ terraform {
 
 data "aws_caller_identity" "current" {}
 
+locals {
+  table_names = toset(var.dynamodb_tables)
+}
+
+data "aws_dynamodb_table" "all_tables" {
+  for_each = local.table_names
+  name     = each.key
+}

@@ -7,6 +7,10 @@ output "table_info" {
   value = data.aws_dynamodb_table.all_tables
 }
 
-# output "pedia_api" {
-#   value = data.aws_api_gateway_resource.my_resource
+# output "table_resources" {
+#   value = aws_api_gateway_resource.table
+# }
+
+# output "pkey_methods" {
+#   value = aws_api_gateway_method.pkey_get
 # }
