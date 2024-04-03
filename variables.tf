@@ -1,7 +1,18 @@
+variable "dynamodb_tables" {
+  type = list(string)
+  description = "List of DynamoDB Tables (Table Names as String Array)"
+}
+
 variable "api_name" {
   type        = string
   default     = "DynamoDB-as-API"
-  description = "API Name"
+  description = "Name for your API. Default is DynamoDB-as-API"
+}
+
+variable "api_version" {
+  type        = string
+  default     = "v1"
+  description = "Given a version number prefixed with v. This will be used as part base-path for API URL. Default is v1"
 }
 
 variable "iam_role_arn" {
@@ -9,28 +20,25 @@ variable "iam_role_arn" {
   description = "IAM Role to access all DynamoDB tables"
 }
 
-variable "dynamodb_tables" {
-  type = list(string)
-  description = "List of DynamoDB Tables (Table Names as String Array)"
+variable "domain_name" {
+  type        = string
+  description = "Domain for the REST API. API name will be used as prefix if domain_name or hosted_zone_id is provided."
+  validation {
+    condition = (can(regex("^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\\.)*([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])$", var.domain_name))
+      && !strcontains(var.domain_name, "..")
+      && !startswith(var.domain_name, "xn--")
+      && !startswith(var.domain_name, "sthree-")
+      && !endswith(var.domain_name, "-s3alias")
+    && !endswith(var.domain_name, "--ol-s3"))
+    error_message = "Provide a valid domain name."
+  }
 }
 
-
-# variable "dynamodb_arn" {
-#   type        = string
-#   default     = null
-#   description = "ARN of DynamoDB database"
-# }
-
-# variable "partition_key" {
-#   type        = string
-#   description = "Partition Key of DynamoDB"
-# }
-
-# variable "sort_key" {
-#   type        = string
-#   default     = null
-#   description = "Partition Key of DynamoDB"
-# }
+variable "hosted_zone_id" {
+  type        = string
+  default = null
+  description = "Id of the Hosted Zone in Route 53"
+}
 
 variable "tags" {
   type        = map(any)

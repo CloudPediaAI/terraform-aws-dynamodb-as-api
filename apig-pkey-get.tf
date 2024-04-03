@@ -75,36 +75,6 @@ resource "aws_api_gateway_integration_response" "pkey_get_int_response" {
     "method.response.header.Access-Control-Allow-Origin" = "'*'"
   }
   response_templates = {
-    "application/json" = <<EOF
-#set($inputRoot = $input.path('$'))
-[
-#foreach($elem in $inputRoot.Items) {
-    #foreach($key in $elem.keySet())
-    #set($valTypes = $elem.get($key).keySet() )
-    #if( $valTypes=="[M]" )
-        #set( $nestElem = $elem.get($key).M )
-        ##"$key": "$nestElem",
-        "$key": {
-        #foreach($nKey in $nestElem.keySet())
-        #set( $nValTypes = $nestElem.get($nKey).keySet() )
-        #if($nValTypes=="[N]")"$nKey": $nestElem.get($nKey).N
-        #elseif($nValTypes=="[BOOL]")"$nKey": $nestElem.get($nKey).BOOL
-        #else
-        "$nKey": "$nestElem.get($nKey).S"
-        #end
-        #if($foreach.hasNext),#{else}}#end
-        #end
-    #elseif( $valTypes=="[N]" )
-    "$key": $elem.get($key).N#if($foreach.hasNext),#end
-    #elseif( $valTypes=="[BOOL]" )
-    "$key": $elem.get($key).BOOL#if($foreach.hasNext),#end
-    #else
-    "$key": "$elem.get($key).S"#if($foreach.hasNext),#end
-    #end
-    #end
-}#if($foreach.hasNext),#end
-#end
-]
-    EOF
+    "application/json" = local.get_response_template
   }
 }
