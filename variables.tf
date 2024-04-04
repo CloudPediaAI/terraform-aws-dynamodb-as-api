@@ -1,12 +1,25 @@
 variable "dynamodb_tables" {
-  type = list(string)
-  description = "List of DynamoDB Tables (Table Names as String Array)"
+  type = map(object({
+    table_name         = string
+    allowed_operations = string
+  }))
+  description = "List of DynamoDB Tables (Table details as as Object('type'={table_name='name', allowed_operations='CRUD'}))"
 }
+
 
 variable "api_name" {
   type        = string
   default     = "DynamoDB-as-API"
   description = "Name for your API. Default is DynamoDB-as-API"
+  validation {
+    condition = (can(regex("^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\\.)*([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])$", var.api_name))
+      && !strcontains(var.api_name, "..")
+      && !startswith(var.api_name, "xn--")
+      && !startswith(var.api_name, "sthree-")
+      && !endswith(var.api_name, "-s3alias")
+    && !endswith(var.api_name, "--ol-s3"))
+    error_message = "Provide API name only contain alphanumeric characters, hyphens, and underscores."
+  }
 }
 
 variable "api_version" {
@@ -16,13 +29,15 @@ variable "api_version" {
 }
 
 variable "iam_role_arn" {
-  type = string
+  type        = string
+  default     = null
   description = "IAM Role to access all DynamoDB tables"
 }
 
 variable "domain_name" {
   type        = string
-  description = "Domain for the REST API. API name will be used as prefix if domain_name or hosted_zone_id is provided."
+  default     = "null"
+  description = "Domain for the REST API.  This is not required if hosted_zone_id provided. API name will be used as prefix if either domain_name or hosted_zone_id is provided."
   validation {
     condition = (can(regex("^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\\.)*([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])$", var.domain_name))
       && !strcontains(var.domain_name, "..")
@@ -36,8 +51,8 @@ variable "domain_name" {
 
 variable "hosted_zone_id" {
   type        = string
-  default = null
-  description = "Id of the Hosted Zone in Route 53"
+  default     = null
+  description = "Id of the Hosted Zone in Route 53.  This is not required if domain_name provided"
 }
 
 variable "tags" {

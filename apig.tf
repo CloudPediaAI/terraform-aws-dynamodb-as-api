@@ -3,32 +3,6 @@ resource "aws_api_gateway_rest_api" "main" {
   tags = var.tags
 }
 
-resource "aws_api_gateway_resource" "table" {
-  for_each = local.table_names
-
-  parent_id   = aws_api_gateway_rest_api.main.root_resource_id
-  path_part   = each.key
-  rest_api_id = aws_api_gateway_rest_api.main.id
-}
-
-resource "aws_api_gateway_method" "table_get" {
-  for_each = aws_api_gateway_resource.table
-
-  authorization = "NONE"
-  http_method   = "GET"
-  resource_id   = each.value.id
-  rest_api_id   = each.value.rest_api_id
-}
-
-resource "aws_api_gateway_integration" "table_get_int" {
-  for_each = aws_api_gateway_method.table_get
-
-  http_method = each.value.http_method
-  resource_id = each.value.resource_id
-  rest_api_id = each.value.rest_api_id
-  type        = "MOCK"
-}
-
 locals {
   table_ids = flatten([
     for key, value in aws_api_gateway_resource.table : [
@@ -130,15 +104,17 @@ resource "aws_api_gateway_deployment" "main_deploy" {
   }
 }
 
-resource "aws_api_gateway_stage" "main_dev" {
+resource "aws_api_gateway_stage" "prod" {
   deployment_id = aws_api_gateway_deployment.main_deploy.id
   rest_api_id   = aws_api_gateway_rest_api.main.id
-  stage_name    = "dev"
+  stage_name    = "prod_${var.api_version}"
 }
 
-resource "aws_api_gateway_base_path_mapping" "main_dev" {
+resource "aws_api_gateway_base_path_mapping" "prod" {
+  count   = (local.create_custom_domain) ? 1 : 0
+
   api_id      = aws_api_gateway_rest_api.main.id
-  stage_name  = aws_api_gateway_stage.main_dev.stage_name
-  domain_name = aws_api_gateway_domain_name.api.domain_name
+  stage_name  = aws_api_gateway_stage.prod.stage_name
+  domain_name = aws_api_gateway_domain_name.api[0].domain_name
   base_path   = var.api_version
 }

@@ -2,7 +2,7 @@ resource "aws_api_gateway_resource" "pkey" {
   for_each = aws_api_gateway_resource.table
 
   parent_id   = each.value.id
-  path_part   = "{${lower(data.aws_dynamodb_table.all_tables[each.key].hash_key)}}"
+  path_part   = "{${lower(local.tables_need_get[each.key].partition_key)}}"
   rest_api_id = each.value.rest_api_id
 }
 
@@ -40,15 +40,15 @@ resource "aws_api_gateway_integration" "pkey_get_int" {
   type                    = "AWS"
   integration_http_method = "POST"
   uri         = "arn:aws:apigateway:us-west-2:dynamodb:action/Query"
-  credentials = var.iam_role_arn
+  credentials = local.role_to_access_tables
 
   request_templates = {
     "application/json" = <<EOF
-#set( $pKeyInput = $input.params('${lower(data.aws_dynamodb_table.all_tables[each.key].hash_key)}') )
+#set( $pKeyInput = $input.params('${lower(local.tables_need_get[each.key].partition_key)}') )
 { 
-    "TableName": "${each.key}",
+    "TableName": "${local.tables_need_get[each.key].table_name}",
     "KeyConditionExpression": "#partKey = :pKeyValue",
-    "ExpressionAttributeNames": { "#partKey": "${data.aws_dynamodb_table.all_tables[each.key].hash_key}" },
+    "ExpressionAttributeNames": { "#partKey": "${local.tables_need_get[each.key].partition_key}" },
     "ExpressionAttributeValues": { 
         ":pKeyValue":  {
                 "S" : "$pKeyInput"
@@ -75,6 +75,69 @@ resource "aws_api_gateway_integration_response" "pkey_get_int_response" {
     "method.response.header.Access-Control-Allow-Origin" = "'*'"
   }
   response_templates = {
-    "application/json" = local.get_response_template
+    "application/json" = <<EOF
+#set($inputRoot = $input.path('$'))
+{
+    "status" : "success",
+    "count": $inputRoot.Count,
+    #if($inputRoot.Count==0)
+    "message": "No records found",
+    "data": null
+    #else
+    "data": { "${each.key}":  [
+#foreach($elem in $inputRoot.Items) {
+    #foreach($key in $elem.keySet())
+    #set($valTypes = $elem.get($key).keySet() )
+    #if( $valTypes=="[M]" )
+        #set( $nestElem = $elem.get($key).M )
+        ##"$key": "$nestElem",
+        "$key": {
+        #foreach($nKey in $nestElem.keySet())
+        #set( $nValTypes = $nestElem.get($nKey).keySet() )
+        #if($nValTypes=="[N]")"$nKey": $nestElem.get($nKey).N
+        #elseif($nValTypes=="[BOOL]")"$nKey": $nestElem.get($nKey).BOOL
+        #else
+        "$nKey": "$nestElem.get($nKey).S"
+        #end
+        #if($foreach.hasNext),#{else}}#end
+        #end#if($foreach.hasNext),#end  
+    #elseif( $valTypes=="[L]" )
+        #set( $nestElem = $elem.get($key).L )
+        "$key": [
+        #foreach($nItem in $nestElem)
+        #set( $nValTypes = $nItem.keySet() )
+        #if($nValTypes=="[N]")$nItem.N
+        #elseif($nValTypes=="[BOOL]")$nItem.BOOL
+        #else
+        "$nItem.S"
+        #end
+        #if($foreach.hasNext),#{else}]#end
+        #end#if($foreach.hasNext),#end          
+    #elseif( $valTypes=="[SS]" )
+        #set( $nestElem = $elem.get($key).SS )
+        "$key": [
+        #foreach($eachValue in $nestElem)
+        "$eachValue"#if($foreach.hasNext),#end
+        #end ]#if($foreach.hasNext),#end  
+    #elseif( $valTypes=="[NS]" )
+        #set( $nestElem = $elem.get($key).NS )
+        "$key": [
+        #foreach($eachValue in $nestElem)
+        $eachValue#if($foreach.hasNext),#end
+        #end ]#if($foreach.hasNext),#end  
+    #elseif( $valTypes=="[N]" )
+    "$key": $elem.get($key).N#if($foreach.hasNext),#end
+    #elseif( $valTypes=="[BOOL]" )
+    "$key": $elem.get($key).BOOL#if($foreach.hasNext),#end
+    #else
+    "$key": "$elem.get($key).S"#if($foreach.hasNext),#end
+    #end
+    #end
+}#if($foreach.hasNext),#end
+#end
+] }
+#end
+}
+    EOF
   }
 }

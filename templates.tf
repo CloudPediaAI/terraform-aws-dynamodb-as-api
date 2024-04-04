@@ -10,6 +10,7 @@ EOF
 #set($inputRoot = $input.path('$'))
 {
     "status" : "success",
+    "count": $inputRoot.Count,
     "data":[
 #foreach($elem in $inputRoot.Items) {
     #foreach($key in $elem.keySet())
