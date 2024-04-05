@@ -1,23 +1,19 @@
 resource "aws_api_gateway_resource" "skey" {
-  # for_each = aws_api_gateway_resource.pkey
-  for_each = local.tables_need_skey_get
-
-  # parent_id   = each.value.id
-  # path_part   = "{${(data.aws_dynamodb_table.all_tables[each.key].range_key!=null)? lower(data.aws_dynamodb_table.all_tables[each.key].range_key) : "_"}}"
-  # rest_api_id = each.value.rest_api_id
+  for_each = local.tables_need_skey_get_delete
 
   parent_id   = aws_api_gateway_resource.pkey[each.key].id
-  path_part   = "{${each.value.sort_key}}"
+  path_part   = "{${each.value.sort_key.name}}"
   rest_api_id = aws_api_gateway_resource.pkey[each.key].rest_api_id
 }
 
 resource "aws_api_gateway_method" "skey_get" {
-  for_each = aws_api_gateway_resource.skey
+  # for_each = aws_api_gateway_resource.skey
+  for_each = local.tables_need_skey_get
 
   authorization = "NONE"
   http_method   = "GET"
-  resource_id   = each.value.id
-  rest_api_id   = each.value.rest_api_id
+  resource_id   = aws_api_gateway_resource.skey[each.key].id
+  rest_api_id   = aws_api_gateway_resource.skey[each.key].rest_api_id
 }
 
 
@@ -44,23 +40,23 @@ resource "aws_api_gateway_integration" "skey_get_int" {
 
   type                    = "AWS"
   integration_http_method = "POST"
-  uri                     = "arn:aws:apigateway:us-west-2:dynamodb:action/Query"
+  uri                     = local.get_integration_uri
   credentials             = local.role_to_access_tables
 
   request_templates = {
     "application/json" = <<EOF
-#set( $pKeyInput = $input.params('${lower(local.tables_need_get[each.key].partition_key)}') )
-#set( $sKeyInput = $input.params('${lower(local.tables_need_get[each.key].sort_key)}') )
+#set( $pKeyInput = $input.params('${lower(local.tables_need_get[each.key].partition_key.name)}') )
+#set( $sKeyInput = $input.params('${lower(local.tables_need_get[each.key].sort_key.name)}') )
 { 
     "TableName": "${local.tables_need_get[each.key].table_name}",
     "KeyConditionExpression": "#partKey = :pKeyValue AND #sortKey = :sKeyValue",
     "ExpressionAttributeNames": { 
-      "#partKey": "${local.tables_need_get[each.key].partition_key}",
-      "#sortKey": "${local.tables_need_get[each.key].sort_key}" 
+      "#partKey": "${local.tables_need_get[each.key].partition_key.name}",
+      "#sortKey": "${local.tables_need_get[each.key].sort_key.name}" 
     },
     "ExpressionAttributeValues": { 
-        ":pKeyValue":  {"S" : "$pKeyInput"},
-        ":sKeyValue":  {"S" : "$sKeyInput"}
+        ":pKeyValue":  {"${local.tables_need_get[each.key].partition_key.type}" : "$pKeyInput"},
+        ":sKeyValue":  {"${local.tables_need_get[each.key].sort_key.type}" : "$sKeyInput"}
     } 
 }
 EOF
@@ -92,7 +88,7 @@ resource "aws_api_gateway_integration_response" "skey_get_int_response" {
     "message": "No records found",
     "data": null
     #else
-    "data": { "${each.key}":  
+    "data": { "${each.key}":  [
 #foreach($elem in $inputRoot.Items) {
     #foreach($key in $elem.keySet())
     #set($valTypes = $elem.get($key).keySet() )
@@ -143,7 +139,7 @@ resource "aws_api_gateway_integration_response" "skey_get_int_response" {
     #end
 }#if($foreach.hasNext),#end
 #end
-}
+]}
 #end
 }
     EOF

@@ -3,7 +3,7 @@ variable "dynamodb_tables" {
     table_name         = string
     allowed_operations = string
   }))
-  description = "List of DynamoDB Tables (Table details as as Object('type'={table_name='name', allowed_operations='CRUD'}))"
+  description = "List of DynamoDB Tables (Table details as as Map(Object('Entity Name'={table_name='Table Name', allowed_operations='CRUD'}))"
 }
 
 
