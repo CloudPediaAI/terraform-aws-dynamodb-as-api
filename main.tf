@@ -11,6 +11,28 @@ terraform {
 data "aws_region" "default" {}
 
 locals {
+  http_methods = {
+    GET    = "GET",
+    POST   = "POST",
+    PUT    = "PUT",
+    DELETE = "DELETE"
+  }
+
+  integration_types = {
+    MOCK       = "MOCK",      # not calling any real backend
+    AWS        = "AWS",       # for AWS services
+    HTTP       = "HTTP",      # for HTTP backends 
+    AWS_PROXY  = "AWS_PROXY"  # for Lambda proxy integration
+    HTTP_PROXY = "HTTP_PROXY" # for HTTP proxy integration
+  }
+
+  auth_types = {
+    NONE    = "NONE",
+    CUSTOM  = "CUSTOM",
+    AWSIAM  = "AWS_IAM",
+    COGNITO = "COGNITO_USER_POOLS"
+  }
+
   tables_has_ops = {
     for key, table_info in var.dynamodb_tables : key => table_info if(table_info != null && table_info.allowed_operations != null)
   }
@@ -93,14 +115,15 @@ locals {
   get_integration_uri = "arn:aws:apigateway:${data.aws_region.default.name}:dynamodb:action/Query"
 
   create_iam_role = (var.iam_role_arn == null)
+  auth_type       = (var.cognito_user_pool_arns != null && length(var.cognito_user_pool_arns) > 0) ? local.auth_types.COGNITO : local.auth_types.NONE
 
   hosted_zone_provided = (var.hosted_zone_id != null)
   domain_provided      = (var.domain_name != "null")
   create_custom_domain = (local.hosted_zone_provided || local.domain_provided)
 
   domain_name     = (local.create_custom_domain) ? ((local.domain_provided) ? lower(var.domain_name) : data.aws_route53_zone.by_id[0].name) : null
-  api_domain_name = (local.create_custom_domain) ? "${var.api_name}.${local.domain_name}" : null
-  custom_api_url  = (local.create_custom_domain) ? "https://${var.api_name}.${local.domain_name}/${var.api_version}" : null
+  api_domain_name = (local.create_custom_domain) ? "${lower(var.api_name)}.${local.domain_name}" : null
+  custom_api_url  = (local.create_custom_domain) ? "https://${lower(var.api_name)}.${local.domain_name}/${var.api_version}" : null
   api_base_url    = (local.create_custom_domain) ? local.custom_api_url : aws_api_gateway_stage.prod.invoke_url
 
   api_endpoints_pkey = flatten([
@@ -121,12 +144,4 @@ locals {
   ])
 
   api_endpoints = concat(local.api_endpoints_pkey, local.api_endpoints_skey)
-
-  # api_endpoints_array = concat(local.api_endpoints_pkey, local.api_endpoints_skey)
-  # api_endpoints = flatten([
-  #   for entity_name, table_info in local.tables_need_endpoint : {
-  #     for key, ep in local.api_endpoints_array : "${entity_name}" => ep if key == entity_name
-  #   }
-  # ])
-
 }

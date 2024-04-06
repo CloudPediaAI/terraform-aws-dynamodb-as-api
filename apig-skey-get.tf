@@ -10,8 +10,10 @@ resource "aws_api_gateway_method" "skey_get" {
   # for_each = aws_api_gateway_resource.skey
   for_each = local.tables_need_skey_get
 
-  authorization = "NONE"
-  http_method   = "GET"
+  authorization = local.auth_type
+  authorizer_id = (local.auth_type == local.auth_types.COGNITO) ? aws_api_gateway_authorizer.cognito[0].id : null
+
+  http_method   = local.http_methods.GET
   resource_id   = aws_api_gateway_resource.skey[each.key].id
   rest_api_id   = aws_api_gateway_resource.skey[each.key].rest_api_id
 }
@@ -38,8 +40,8 @@ resource "aws_api_gateway_integration" "skey_get_int" {
   rest_api_id = each.value.rest_api_id
   http_method = each.value.http_method
 
-  type                    = "AWS"
-  integration_http_method = "POST"
+  type                    = local.integration_types.AWS
+  integration_http_method = local.http_methods.POST
   uri                     = local.get_integration_uri
   credentials             = local.role_to_access_tables
 
@@ -68,7 +70,7 @@ EOF
 resource "aws_api_gateway_integration_response" "skey_get_int_response" {
   for_each = aws_api_gateway_integration.skey_get_int
 
-  # depends_on  = [aws_api_gateway_integration.table_get_int]
+  depends_on  = [aws_api_gateway_integration.skey_get_int]
 
   resource_id = each.value.resource_id
   rest_api_id = each.value.rest_api_id

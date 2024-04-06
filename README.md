@@ -1,5 +1,6 @@
 # AWS DynamoDB as API
-This terraform module will create a REST API to read, write, delete data from your DynamoDB database 
+This terraform module will create a REST API to Read items from your DynamoDB tables (Create, Update, Delete will be added soon).  You just provide the list of Dynamodb tables, this module will read schema of all tables and will generate endpoints accordingly.
+
 
 # Links
 

@@ -10,16 +10,18 @@ resource "aws_api_gateway_method" "pkey_get" {
   # for_each = aws_api_gateway_resource.pkey
   for_each = local.tables_need_pkey_get
 
-  authorization = "NONE"
-  http_method   = "GET"
-  resource_id   = aws_api_gateway_resource.pkey[each.key].id
-  rest_api_id   = aws_api_gateway_resource.pkey[each.key].rest_api_id
+  authorization = local.auth_type
+  authorizer_id = (local.auth_type == local.auth_types.COGNITO) ? aws_api_gateway_authorizer.cognito[0].id : null
+
+  http_method = local.http_methods.GET
+  resource_id = aws_api_gateway_resource.pkey[each.key].id
+  rest_api_id = aws_api_gateway_resource.pkey[each.key].rest_api_id
 }
 
 
 #Add a response code with the method
 resource "aws_api_gateway_method_response" "pkey_get_method_response" {
-  for_each =  aws_api_gateway_method.pkey_get
+  for_each = aws_api_gateway_method.pkey_get
 
   resource_id = each.value.resource_id
   rest_api_id = each.value.rest_api_id
@@ -32,16 +34,16 @@ resource "aws_api_gateway_method_response" "pkey_get_method_response" {
 }
 
 resource "aws_api_gateway_integration" "pkey_get_int" {
-  for_each =  aws_api_gateway_method.pkey_get
+  for_each = aws_api_gateway_method.pkey_get
 
   resource_id = each.value.resource_id
   rest_api_id = each.value.rest_api_id
   http_method = each.value.http_method
 
-  type                    = "AWS"
-  integration_http_method = "POST"
-  uri         = local.get_integration_uri
-  credentials = local.role_to_access_tables
+  type                    = local.integration_types.AWS
+  integration_http_method = local.http_methods.POST
+  uri                     = local.get_integration_uri
+  credentials             = local.role_to_access_tables
 
   request_templates = {
     "application/json" = <<EOF
@@ -65,12 +67,12 @@ EOF
 resource "aws_api_gateway_integration_response" "pkey_get_int_response" {
   for_each = aws_api_gateway_integration.pkey_get_int
 
-  # depends_on  = [aws_api_gateway_integration.table_get_int]
+  depends_on  = [aws_api_gateway_integration.pkey_get_int]
 
   resource_id = each.value.resource_id
   rest_api_id = each.value.rest_api_id
   http_method = each.value.http_method
-  
+
   status_code = aws_api_gateway_method_response.pkey_get_method_response[each.key].status_code
   response_parameters = {
     "method.response.header.Access-Control-Allow-Origin" = "'*'"

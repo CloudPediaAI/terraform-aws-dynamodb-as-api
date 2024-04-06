@@ -55,6 +55,12 @@ variable "hosted_zone_id" {
   description = "Id of the Hosted Zone in Route 53.  This is not required if domain_name provided"
 }
 
+variable "cognito_user_pool_arns" {
+  type        = set(string)
+  default     = []
+  description = "List of the Amazon Cognito user pool ARNs to authenticate API endpoints"
+}
+
 variable "tags" {
   type        = map(any)
   description = "Key/Value pairs for the tags"

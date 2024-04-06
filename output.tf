@@ -12,6 +12,11 @@ output "api_endpoints" {
   value = local.api_endpoints
 }
 
+# output "domain_validations" {
+#   value = local.domain_validations
+# }
+
+
 # output "table_info" {
 #   value = data.aws_dynamodb_table.all_tables
 # }

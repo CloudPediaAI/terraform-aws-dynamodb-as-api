@@ -10,8 +10,10 @@ resource "aws_api_gateway_resource" "table" {
 resource "aws_api_gateway_method" "table_get" {
   for_each = aws_api_gateway_resource.table
 
-  authorization = "NONE"
-  http_method   = "GET"
+  authorization = local.auth_type
+  authorizer_id = (local.auth_type == local.auth_types.COGNITO) ? aws_api_gateway_authorizer.cognito[0].id : null
+
+  http_method   = local.http_methods.GET
   resource_id   = each.value.id
   rest_api_id   = each.value.rest_api_id
 }
@@ -22,5 +24,5 @@ resource "aws_api_gateway_integration" "table_get_int" {
   http_method = each.value.http_method
   resource_id = each.value.resource_id
   rest_api_id = each.value.rest_api_id
-  type        = "MOCK"
+  type        = local.integration_types.MOCK
 }
