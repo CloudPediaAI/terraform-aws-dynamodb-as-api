@@ -18,7 +18,7 @@ locals {
 resource "aws_api_gateway_domain_name" "api" {
   count   = (local.create_custom_domain) ? 1 : 0
 
-  certificate_arn = aws_acm_certificate_validation.ssl.certificate_arn
+  certificate_arn = aws_acm_certificate_validation.ssl[0].certificate_arn
   domain_name     = local.api_domain_name
 }
 
