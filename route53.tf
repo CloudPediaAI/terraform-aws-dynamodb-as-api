@@ -12,7 +12,7 @@ data "aws_route53_zone" "by_name" {
 
 # extract Hosted Zone Id 
 locals {
-  hosted_zone = (local.create_custom_domain) ? ((local.hosted_zone_provided) ? data.aws_route53_zone.by_id[0].zone_id : data.aws_route53_zone.by_name[0].zone_id) : null
+  hosted_zone = (local.create_custom_domain) ? ((local.hosted_zone_provided) ? data.aws_route53_zone.by_id[0].zone_id : data.aws_route53_zone.by_name[0].zone_id) : "null"
 }
 
 resource "aws_api_gateway_domain_name" "api" {
