@@ -1,9 +1,10 @@
 variable "dynamodb_tables" {
   type = map(object({
     table_name         = string
+    index_name         = string
     allowed_operations = string
   }))
-  description = "List of DynamoDB Tables (Table details as as Map(Object('Entity Name'={table_name='Table Name', allowed_operations='CRUD'}))"
+  description = "List of DynamoDB Tables and Index (Table details as as Map(Object('Entity Name'={table_name='Table Name', allowed_operations='CRUD'}))"
 }
 
 

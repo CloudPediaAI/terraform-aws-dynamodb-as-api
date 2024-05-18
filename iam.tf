@@ -53,8 +53,8 @@ data "aws_iam_policy_document" "dynamodb_access_policy" {
 resource "aws_iam_policy" "dynamodb_access_policy" {
   for_each = (local.create_iam_role) ? data.aws_iam_policy_document.dynamodb_access_policy : {}
 
-  name        = "${var.api_name}-${local.tables_need_endpoint[each.key].table_name}-policy"
-  description = "Policy to allow API ${var.api_name} to access DynamoDB table ${local.tables_need_endpoint[each.key].table_name}"
+  name        = "${var.api_name}-${local.tables_need_endpoint[each.key].table_index_name}-policy"
+  description = "Policy to allow API ${var.api_name} to access DynamoDB table-index ${local.tables_need_endpoint[each.key].table_index_name}"
   policy = each.value.json
   tags = var.tags
 }

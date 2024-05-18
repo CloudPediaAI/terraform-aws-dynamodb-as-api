@@ -33,8 +33,14 @@ locals {
     COGNITO = "COGNITO_USER_POOLS"
   }
 
+  # tables without index
   tables_has_ops = {
-    for key, table_info in var.dynamodb_tables : key => table_info if(table_info != null && table_info.allowed_operations != null)
+    for key, table_info in var.dynamodb_tables : key => table_info if(table_info != null && table_info.index_name == null && table_info.allowed_operations != null)
+  }
+
+  # tables with index
+  indexes_has_ops = {
+    for key, table_info in var.dynamodb_tables : key => table_info if(table_info != null && table_info.index_name != null && table_info.allowed_operations != null)
   }
 }
 
@@ -43,27 +49,124 @@ data "aws_dynamodb_table" "all_tables" {
   name     = each.value.table_name
 }
 
-# prepare list of tables based on allowed_operations and the presence of sort_key.name 
+data "aws_dynamodb_table" "all_indexes" {
+  for_each = local.indexes_has_ops
+  name     = each.value.table_name
+}
+
 locals {
-  tables_need_endpoint_array = flatten([
+  // preparing schema of all tables
+  tables = flatten([
     for key, value in data.aws_dynamodb_table.all_tables : [
-      (strcontains(upper(local.tables_has_ops[key].allowed_operations), "C")
-        || strcontains(upper(local.tables_has_ops[key].allowed_operations), "R")
-        || strcontains(upper(local.tables_has_ops[key].allowed_operations), "U")
-      || strcontains(upper(local.tables_has_ops[key].allowed_operations), "D")) ?
       {
-        entity_name = key
-        table_name  = value.name
-        table_arn   = value.arn
+        entity_name      = key
+        table_index_name = "${key}_${value.name}"
+        is_index         = false
+
+        table_name = value.name
+        index_name = null
+        table_arn  = value.arn
+        hash_key   = value.hash_key
+        range_key  = (value.range_key != null && value.range_key != "") ? value.range_key : null
+        attribute  = value.attribute
+
+        need_post   = strcontains(upper(var.dynamodb_tables[key].allowed_operations), "C")
+        need_get    = strcontains(upper(var.dynamodb_tables[key].allowed_operations), "R")
+        need_put    = strcontains(upper(var.dynamodb_tables[key].allowed_operations), "U")
+        need_delete = strcontains(upper(var.dynamodb_tables[key].allowed_operations), "D")
+        need_method = (
+          strcontains(upper(var.dynamodb_tables[key].allowed_operations), "C") ||
+          strcontains(upper(var.dynamodb_tables[key].allowed_operations), "R") ||
+          strcontains(upper(var.dynamodb_tables[key].allowed_operations), "U") ||
+          strcontains(upper(var.dynamodb_tables[key].allowed_operations), "D")
+        )
+      }
+    ]
+  ])
+
+  // preparing schema of all Local Secondary Indexes
+  local_indexes = flatten([
+    for key, value in data.aws_dynamodb_table.all_indexes : [
+      for index_info in value.local_secondary_index : {
+        entity_name      = key
+        table_index_name = "${key}_${value.name}_${index_info.name}"
+        is_index         = true
+
+        table_name = value.name
+        index_name = index_info.name
+        // preparing ARN for index by suffixing index-name
+        table_arn = "${value.arn}/index/${index_info.name}"
+        // local indexes inherit hash_key from its table, so taking hash_key from the table
+        hash_key  = value.hash_key
+        range_key = (index_info.range_key != null && index_info.range_key != "") ? index_info.range_key : null
+        attribute = value.attribute
+
+        need_post   = false
+        need_get    = strcontains(upper(var.dynamodb_tables[key].allowed_operations), "R")
+        need_put    = false
+        need_delete = false
+        need_method = strcontains(upper(var.dynamodb_tables[key].allowed_operations), "R")
+      }
+    ]
+  ])
+
+  // preparing schema of all Global Secondary Indexes
+  global_indexes = flatten([
+    for key, value in data.aws_dynamodb_table.all_indexes : [
+      for index_info in value.global_secondary_index : {
+        entity_name      = key
+        table_index_name = "${key}_${value.name}_${index_info.name}"
+        is_index         = true
+
+        table_name = value.name
+        index_name = index_info.name
+        // preparing ARN for index by suffixing index-name
+        table_arn = "${value.arn}/index/${index_info.name}"
+        hash_key  = index_info.hash_key
+        range_key = (index_info.range_key != null && index_info.range_key != "") ? index_info.range_key : null
+        attribute = value.attribute
+
+        need_post   = false
+        need_get    = strcontains(upper(var.dynamodb_tables[key].allowed_operations), "R")
+        need_put    = false
+        need_delete = false
+        need_method = strcontains(upper(var.dynamodb_tables[key].allowed_operations), "R")
+      }
+    ]
+  ])
+
+  tables_and_indexes = distinct(concat(local.tables, local.local_indexes, local.global_indexes))
+
+  tables_and_indexes_info = {
+    for tiinfo in local.tables_and_indexes : tiinfo.table_index_name => tiinfo
+  }
+
+}
+
+locals {
+  # prepare list of tables/indexes based on allowed_operations and the presence of sort_key.name 
+  tables_need_endpoint_array = flatten([
+    for key, value in local.tables_and_indexes_info : [
+      ((var.dynamodb_tables[value.entity_name].table_name == value.table_name && var.dynamodb_tables[value.entity_name].index_name == value.index_name) &&
+        (value.need_method)
+      ) ?
+      {
+        entity_name      = value.entity_name
+        table_name       = value.table_name
+        is_index         = value.is_index
+        index_name       = value.index_name
+        table_index_name = value.table_index_name
+        table_arn        = value.table_arn
 
         partition_key = tolist(value.attribute)[index(value.attribute.*.name, value.hash_key)]
         has_sort_key  = (value.range_key != null)
         sort_key      = (value.range_key != null) ? tolist(value.attribute)[index(value.attribute.*.name, value.range_key)] : null
 
-        need_post   = strcontains(upper(local.tables_has_ops[key].allowed_operations), "C")
-        need_get    = strcontains(upper(local.tables_has_ops[key].allowed_operations), "R")
-        need_put    = strcontains(upper(local.tables_has_ops[key].allowed_operations), "U")
-        need_delete = strcontains(upper(local.tables_has_ops[key].allowed_operations), "D")
+        need_post   = value.need_post
+        need_get    = value.need_get
+        need_put    = value.need_put
+        need_delete = value.need_delete
+        need_method = value.need_method
       } : null
     ]
   ])
@@ -75,41 +178,47 @@ locals {
 
   # if allowed_operations contains R (Read)
   tables_need_get = {
-    for table_info in local.tables_need_endpoint_array : "${table_info.entity_name}" => table_info if(table_info != null && table_info.need_get)
-  }
-  # if allowed_operations contains C (Create)
-  tables_need_post = {
-    for table_info in local.tables_need_endpoint_array : "${table_info.entity_name}" => table_info if(table_info != null && table_info.need_post)
-  }
-  # if allowed_operations contains U (Update)
-  tables_need_put = {
-    for table_info in local.tables_need_endpoint_array : "${table_info.entity_name}" => table_info if(table_info != null && table_info.need_put)
-  }
-  # if allowed_operations contains D (Delete)
-  tables_need_delete = {
-    for table_info in local.tables_need_endpoint_array : "${table_info.entity_name}" => table_info if(table_info != null && table_info.need_delete)
-  }
-  # if allowed_operations contains R (Read) or D (Delete)
-  tables_need_get_delete = {
-    for table_info in local.tables_need_endpoint_array : "${table_info.entity_name}" => table_info if(table_info != null && (table_info.need_get || table_info.need_delete))
+    for key, table_info in local.tables_need_endpoint : key => table_info if(table_info != null && table_info.need_get)
   }
 
-  # Since all tables will have a partition-key
+  # if allowed_operations contains C (Create)
+  tables_need_post = {
+    for key, table_info in local.tables_need_endpoint : key => table_info if(table_info != null && table_info.need_post)
+  }
+
+  # if allowed_operations contains U (Update)
+  tables_need_put = {
+    for key, table_info in local.tables_need_endpoint : key => table_info if(table_info != null && table_info.need_put)
+  }
+
+  # if allowed_operations contains D (Delete)
+  tables_need_delete = {
+    for key, table_info in local.tables_need_endpoint : key => table_info if(table_info != null && table_info.need_delete)
+  }
+
+  # if allowed_operations contains R (Read) or D (Delete)
+  tables_need_get_delete = {
+    for key, table_info in local.tables_need_endpoint : key => table_info if(table_info != null && (table_info.need_get || table_info.need_delete))
+  }
+
+  # Since all tables/indexes will have a partition-key
   tables_need_pkey_get        = local.tables_need_get
   tables_need_pkey_delete     = local.tables_need_delete
   tables_need_pkey_get_delete = local.tables_need_get_delete
 
   # if table has a SORT-KEY and allowed_operations contains R (Read)
   tables_need_skey_get = {
-    for table_info in local.tables_need_endpoint_array : "${table_info.entity_name}" => table_info if(table_info != null && table_info.has_sort_key && table_info.need_get)
+    for key, table_info in local.tables_need_endpoint : key => table_info if(table_info != null && table_info.has_sort_key && table_info.need_get)
   }
+
   # if table has a SORT-KEY and allowed_operations contains D (Delete)
   tables_need_skey_delete = {
-    for table_info in local.tables_need_endpoint_array : "${table_info.entity_name}" => table_info if(table_info != null && table_info.has_sort_key && table_info.need_delete)
+    for key, table_info in local.tables_need_endpoint : key => table_info if(table_info != null && table_info.has_sort_key && table_info.need_delete)
   }
+
   # if table has a SORT-KEY and allowed_operations contains R (Read) or D (Delete)
   tables_need_skey_get_delete = {
-    for table_info in local.tables_need_endpoint_array : "${table_info.entity_name}" => table_info if(table_info != null && table_info.has_sort_key && (table_info.need_get || table_info.need_delete))
+    for key, table_info in local.tables_need_endpoint : key => table_info if(table_info != null && table_info.has_sort_key && (table_info.need_get || table_info.need_delete))
   }
 
   get_integration_uri = "arn:aws:apigateway:${data.aws_region.default.name}:dynamodb:action/Query"

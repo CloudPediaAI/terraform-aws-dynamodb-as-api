@@ -45,7 +45,22 @@ resource "aws_api_gateway_integration" "pkey_get_int" {
   uri                     = local.get_integration_uri
   credentials             = local.role_to_access_tables
 
-  request_templates = {
+  request_templates = (local.tables_need_get[each.key].is_index) ? {
+    "application/json" = <<EOF
+#set( $pKeyInput = $input.params('${lower(local.tables_need_get[each.key].partition_key.name)}') )
+{ 
+    "TableName": "${local.tables_need_get[each.key].table_name}",
+    "IndexName": "${local.tables_need_get[each.key].index_name}",
+    "KeyConditionExpression": "#partKey = :pKeyValue",
+    "ExpressionAttributeNames": { "#partKey": "${local.tables_need_get[each.key].partition_key.name}" },
+    "ExpressionAttributeValues": { 
+        ":pKeyValue":  {
+                "${local.tables_need_get[each.key].partition_key.type}" : "$pKeyInput"
+            }
+    } 
+}
+EOF
+    } : {
     "application/json" = <<EOF
 #set( $pKeyInput = $input.params('${lower(local.tables_need_get[each.key].partition_key.name)}') )
 { 
@@ -67,7 +82,7 @@ EOF
 resource "aws_api_gateway_integration_response" "pkey_get_int_response" {
   for_each = aws_api_gateway_integration.pkey_get_int
 
-  depends_on  = [aws_api_gateway_integration.pkey_get_int]
+  depends_on = [aws_api_gateway_integration.pkey_get_int]
 
   resource_id = each.value.resource_id
   rest_api_id = each.value.rest_api_id

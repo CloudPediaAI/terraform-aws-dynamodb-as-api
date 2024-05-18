@@ -13,9 +13,9 @@ resource "aws_api_gateway_method" "skey_get" {
   authorization = local.auth_type
   authorizer_id = (local.auth_type == local.auth_types.COGNITO) ? aws_api_gateway_authorizer.cognito[0].id : null
 
-  http_method   = local.http_methods.GET
-  resource_id   = aws_api_gateway_resource.skey[each.key].id
-  rest_api_id   = aws_api_gateway_resource.skey[each.key].rest_api_id
+  http_method = local.http_methods.GET
+  resource_id = aws_api_gateway_resource.skey[each.key].id
+  rest_api_id = aws_api_gateway_resource.skey[each.key].rest_api_id
 }
 
 
@@ -45,7 +45,25 @@ resource "aws_api_gateway_integration" "skey_get_int" {
   uri                     = local.get_integration_uri
   credentials             = local.role_to_access_tables
 
-  request_templates = {
+  request_templates = (local.tables_need_get[each.key].is_index) ? {
+    "application/json" = <<EOF
+#set( $pKeyInput = $input.params('${lower(local.tables_need_get[each.key].partition_key.name)}') )
+#set( $sKeyInput = $input.params('${lower(local.tables_need_get[each.key].sort_key.name)}') )
+{ 
+    "TableName": "${local.tables_need_get[each.key].table_name}",
+    "IndexName": "${local.tables_need_get[each.key].index_name}",
+    "KeyConditionExpression": "#partKey = :pKeyValue AND #sortKey = :sKeyValue",
+    "ExpressionAttributeNames": { 
+      "#partKey": "${local.tables_need_get[each.key].partition_key.name}",
+      "#sortKey": "${local.tables_need_get[each.key].sort_key.name}" 
+    },
+    "ExpressionAttributeValues": { 
+        ":pKeyValue":  {"${local.tables_need_get[each.key].partition_key.type}" : "$pKeyInput"},
+        ":sKeyValue":  {"${local.tables_need_get[each.key].sort_key.type}" : "$sKeyInput"}
+    } 
+}
+EOF
+    } : {
     "application/json" = <<EOF
 #set( $pKeyInput = $input.params('${lower(local.tables_need_get[each.key].partition_key.name)}') )
 #set( $sKeyInput = $input.params('${lower(local.tables_need_get[each.key].sort_key.name)}') )
@@ -70,7 +88,7 @@ EOF
 resource "aws_api_gateway_integration_response" "skey_get_int_response" {
   for_each = aws_api_gateway_integration.skey_get_int
 
-  depends_on  = [aws_api_gateway_integration.skey_get_int]
+  depends_on = [aws_api_gateway_integration.skey_get_int]
 
   resource_id = each.value.resource_id
   rest_api_id = each.value.rest_api_id
