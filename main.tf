@@ -2,12 +2,13 @@ terraform {
   required_providers {
     aws = {
       source                = "hashicorp/aws"
-      version               = "~> 5.36.0"
+      version               = "~> 6.0"
       configuration_aliases = [aws.us-east-1, aws]
     }
   }
 }
 
+data "aws_caller_identity" "current" {}
 data "aws_region" "default" {}
 
 locals {
@@ -221,7 +222,7 @@ locals {
     for key, table_info in local.tables_need_endpoint : key => table_info if(table_info != null && table_info.has_sort_key && (table_info.need_get || table_info.need_delete))
   }
 
-  get_integration_uri = "arn:aws:apigateway:${data.aws_region.default.name}:dynamodb:action/Query"
+  get_integration_uri = "arn:aws:apigateway:${data.aws_region.default.region}:dynamodb:action/Query"
 
   create_iam_role = (var.iam_role_arn == null)
   auth_type       = (var.cognito_user_pool_arns != null && length(var.cognito_user_pool_arns) > 0) ? local.auth_types.COGNITO : local.auth_types.NONE
@@ -234,6 +235,15 @@ locals {
   api_domain_name = (local.create_custom_domain) ? "${lower(var.api_name)}.${local.domain_name}" : null
   custom_api_url  = (local.create_custom_domain) ? "https://${lower(var.api_name)}.${local.domain_name}/${var.api_version}" : null
   api_base_url    = (local.create_custom_domain) ? local.custom_api_url : aws_api_gateway_stage.prod.invoke_url
+
+  api_endpoints_post = flatten([
+    for key, value in local.tables_need_post : {
+      "${key}" = {
+        "post-${key}" : "${local.api_base_url}${aws_api_gateway_resource.table[key].path}"
+      }
+    }
+    ]
+  )
 
   api_endpoints_pkey = flatten([
     for key, value in local.tables_need_pkey_get : {

@@ -26,7 +26,7 @@ variable "api_name" {
 variable "api_version" {
   type        = string
   default     = "v1"
-  description = "Given a version number prefixed with v. This will be used as part base-path for API URL. Default is v1"
+  description = "Give a version number prefixed with v. This will be used as part of base-path for API URL. Default is v1"
 }
 
 variable "iam_role_arn" {

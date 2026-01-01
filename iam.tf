@@ -12,7 +12,7 @@ resource "aws_iam_role" "dynamodb_access_role" {
 			"Sid": "",
 			"Effect": "Allow",
 			"Principal": {
-				"Service": "apigateway.amazonaws.com"
+				"Service": ["apigateway.amazonaws.com", "lambda.amazonaws.com"]
 			},
 			"Action": "sts:AssumeRole"
 		}
@@ -68,4 +68,38 @@ resource "aws_iam_role_policy_attachment" "dynamodb_access_attach" {
 
 locals {
   role_to_access_tables = (local.create_iam_role) ? aws_iam_role.dynamodb_access_role[0].arn : var.iam_role_arn
+}
+
+# IAM Role for Lambda invoke permissions
+resource "aws_iam_role" "post_invoke_lambda" {
+  name = "lambda_for_post_invoke_role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "post_invoke_lambda" {
+  name = "lambda_for_post_invoke_policy"
+  role = aws_iam_role.post_invoke_lambda.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "lambda:InvokeFunction"
+        ]
+        Resource = aws_lambda_function.lambda_for_post[*].arn
+      }
+    ]
+  })
 }

@@ -10,6 +10,17 @@ This terraform module will create a REST API to Read items from your DynamoDB ta
 
 
 # Release Notes
+## v1.2.0
+### Changes/Updates
+
+### Input Variable Changes
+#### 1. 
+
+### Output Variable Changes
+None
+
+
+
 ## v1.1.0
 ### Changes/Updates
 Enhanced this module to retrieve data from both Global and Local Seconday Indexes of any DynamoDB table
