@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source                = "hashicorp/aws"
-      version               = "~> 5.36.0"
+      version               = "~> 6.0"
       configuration_aliases = [aws.us-east-1, aws]
     }
   }
@@ -221,7 +221,7 @@ locals {
     for key, table_info in local.tables_need_endpoint : key => table_info if(table_info != null && table_info.has_sort_key && (table_info.need_get || table_info.need_delete))
   }
 
-  get_integration_uri = "arn:aws:apigateway:${data.aws_region.default.name}:dynamodb:action/Query"
+  get_integration_uri = "arn:aws:apigateway:${data.aws_region.default.region}:dynamodb:action/Query"
 
   create_iam_role = (var.iam_role_arn == null)
   auth_type       = (var.cognito_user_pool_arns != null && length(var.cognito_user_pool_arns) > 0) ? local.auth_types.COGNITO : local.auth_types.NONE
