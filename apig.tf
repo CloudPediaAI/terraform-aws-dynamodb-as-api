@@ -91,13 +91,10 @@ resource "aws_api_gateway_deployment" "main_deploy" {
     redeployment = sha1(jsonencode([
       local.table_ids, local.pkey_ids, local.skey_ids,
       local.table_get_method_ids, local.pkey_get_method_ids, local.skey_get_method_ids,
-      local.table_get_int_ids, local.pkey_get_int_ids, local.skey_get_int_ids
+      local.table_get_int_ids, local.pkey_get_int_ids, local.skey_get_int_ids,
+      aws_api_gateway_authorizer.cognito[*].id
     ]))
   }
-  # aws_api_gateway_resource.table.id,
-  # aws_api_gateway_method.table_get.id,
-  # aws_api_gateway_integration.table_get_int.id,
-
 
   lifecycle {
     create_before_destroy = true
@@ -110,15 +107,14 @@ resource "aws_api_gateway_stage" "prod" {
   stage_name    = "prod_${var.api_version}"
 }
 
-# resource "aws_api_gateway_base_path_mapping" "prod" {
-#   count = (local.create_custom_domain) ? 1 : 0
+resource "aws_api_gateway_base_path_mapping" "prod" {
+  count = (local.create_custom_domain) ? 1 : 0
 
-#   api_id      = aws_api_gateway_rest_api.main.id
-#   stage_name  = aws_api_gateway_stage.prod.stage_name
-#   domain_name = aws_api_gateway_domain_name.api[0].domain_name
-#   base_path   = var.api_version
-# }
-
+  api_id      = aws_api_gateway_rest_api.main.id
+  stage_name  = aws_api_gateway_stage.prod.stage_name
+  domain_name = aws_api_gateway_domain_name.api[0].domain_name
+  base_path   = var.api_version
+}
 
 # count         = (var.cognito_user_pool_arns != null && length(var.cognito_user_pool_arns) > 0) ? 1 : 0
 resource "aws_api_gateway_authorizer" "cognito" {

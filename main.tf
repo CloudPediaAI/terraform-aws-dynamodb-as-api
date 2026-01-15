@@ -232,8 +232,9 @@ locals {
   create_custom_domain = (local.hosted_zone_provided || local.domain_provided)
 
   domain_name     = (local.create_custom_domain) ? ((local.domain_provided) ? lower(var.domain_name) : data.aws_route53_zone.by_id[0].name) : null
-  api_domain_name = (local.create_custom_domain) ? "${lower(var.api_name)}.${local.domain_name}" : null
-  custom_api_url  = (local.create_custom_domain) ? "https://${lower(var.api_name)}.${local.domain_name}/${var.api_version}" : null
+  api_subdomain_name = (var.api_subdomain_name != "") ? "${lower(var.api_subdomain_name)}" : "${lower(var.api_name)}"
+  api_domain_name = (local.create_custom_domain) ? "${local.api_subdomain_name}.${local.domain_name}" : null
+  custom_api_url  = (local.create_custom_domain) ? "https://${local.api_subdomain_name}.${local.domain_name}/${var.api_version}" : null
   api_base_url    = (local.create_custom_domain) ? local.custom_api_url : aws_api_gateway_stage.prod.invoke_url
 
   api_endpoints_post = flatten([

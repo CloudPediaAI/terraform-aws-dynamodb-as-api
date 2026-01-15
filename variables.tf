@@ -50,6 +50,20 @@ variable "domain_name" {
   }
 }
 
+variable "api_subdomain_name" {
+  type        = string
+  default     = ""
+  description = "Subdomain Name to be part of your API URL. If not provided, api_name will be used as subdomain."
+  validation {
+    condition = (var.api_subdomain_name == "" || (
+      can(regex("^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$", var.api_subdomain_name))
+      && !strcontains(var.api_subdomain_name, "--")
+      && length(var.api_subdomain_name) <= 63
+    ))
+    error_message = "Subdomain name must contain only alphanumeric characters and hyphens, cannot start or end with a hyphen, cannot contain consecutive hyphens, and must be 63 characters or less."
+  }
+}
+
 variable "hosted_zone_id" {
   type        = string
   default     = null

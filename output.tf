@@ -13,3 +13,7 @@ output "api_endpoints" {
   description = "List of API endpoints created to access/manage data in your DynamoDB tables"
 }
 
+output "api_url" {
+  value       = local.api_base_url
+  description = "Base URL of the API Created by this module"
+}
