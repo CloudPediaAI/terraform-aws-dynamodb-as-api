@@ -2,7 +2,7 @@
 *  Function for DynamoDB-As-API
 *  Developed by CloudPedia.AI
 *  Created: 1/11/2026
-*  Last Modified: 1/11/2026
+*  Last Modified: 1/17/2026
 *  Build Version 1.0.0
 * * * * * * * * * * * * * * * * * * * * * * */
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
@@ -44,6 +44,9 @@ export const handler = async (event) => {
         const table_name = event.table_name;
         const partition_key = event.partition_key;
         const sort_key = event.sort_key;
+        const partition_key_value = event.partition_key_value;
+        const sort_key_value = event.sort_key_value;
+
         if (sort_key) {
             item_not_found_msg = "No item found in " + entity_name + " with provided Partition key (" + partition_key + ") and Sort key (" + sort_key + ")";
         } else {
@@ -55,20 +58,14 @@ export const handler = async (event) => {
         //     return errorCallback(new Error("Keys not found to delete item from "+entity_name, 400));
         // }
 
-        const itemToDelete = event.body;
-        let partition_key_value = null;
-        let sort_key_value = null;
+        // const itemToDelete = event.body;
 
-        if ((partition_key in itemToDelete) && itemToDelete[partition_key]) {
-            partition_key_value = itemToDelete[partition_key];
-        } else {
+        if (!partition_key_value){
             return errorCallback(new Error("Partition key (" + partition_key + ") required to delete existing item from " + entity_name), 400);
         }
 
         if (sort_key) {
-            if ((sort_key in itemToDelete) && itemToDelete[sort_key]) {
-                sort_key_value = itemToDelete[sort_key];
-            } else {
+            if (!sort_key_value) {
                 return errorCallback(new Error("Sort key (" + sort_key + ") required to update existing item from " + entity_name), 400);
             }
         }
@@ -103,15 +100,17 @@ export const handler = async (event) => {
             TableName: table_name,
             Key: primaryKey,
             ExpressionAttributeValues: attValues,
-            ConditionExpression: conditionExpr
+            ConditionExpression: conditionExpr,
+            ReturnValues: 'ALL_OLD'
         };
         console.log("params: ", params);
 
         // Put item in DynamoDB
-        await dynamoDb.send(new DeleteCommand(params));
-
+        const result = await dynamoDb.send(new DeleteCommand(params));
+        const deletedItem = result.Attributes
+        
         // success response
-        return successCallback(entity_name, itemToDelete);
+        return successCallback(entity_name, deletedItem);
 
     } catch (error) {
         console.error("Error adding item:", error.name);

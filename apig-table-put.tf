@@ -17,7 +17,7 @@ resource "aws_api_gateway_integration" "table_put_int" {
   rest_api_id = each.value.rest_api_id
 
   integration_http_method = "POST"
-  type                    = "AWS_PROXY"
+  type                    = local.integration_types.AWS
   uri                     = aws_lambda_function.lambda_for_put[0].invoke_arn
 }
 

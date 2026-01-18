@@ -34,6 +34,15 @@ locals {
     COGNITO = "COGNITO_USER_POOLS"
   }
 
+  http_status = {
+    SUCCESS_200 = "200",
+    CLIENT_ERR_400 = "400",
+    UNAUTH_401 = "401",
+    FORBIDDEN_403 = "403",
+    NOT_FOUND_404 = "404",
+    SERVER_ERR_500 = "500"
+  }
+
   # tables without index
   tables_has_ops = {
     for key, table_info in var.dynamodb_tables : key => table_info if(table_info != null && table_info.index_name == null && table_info.allowed_operations != null)
@@ -237,15 +246,6 @@ locals {
   custom_api_url  = (local.create_custom_domain) ? "https://${local.api_subdomain_name}.${local.domain_name}/${var.api_version}" : null
   api_base_url    = (local.create_custom_domain) ? local.custom_api_url : aws_api_gateway_stage.prod.invoke_url
 
-  api_endpoints_post = flatten([
-    for key, value in local.tables_need_post : {
-      "${key}" = {
-        "post-${key}" : "${local.api_base_url}${aws_api_gateway_resource.table[key].path}"
-      }
-    }
-    ]
-  )
-
   api_endpoints_pkey = flatten([
     for key, value in local.tables_need_pkey_get : {
       "${key}" = {
@@ -263,5 +263,33 @@ locals {
     }
   ])
 
-  api_endpoints = concat(local.api_endpoints_pkey, local.api_endpoints_skey)
+
+  api_endpoints_post = flatten([
+    for key, value in local.tables_need_post : {
+      "${key}" = {
+        "post-${key}" : "${local.api_base_url}${aws_api_gateway_resource.table[key].path}"
+      }
+    }
+    ]
+  )
+
+  api_endpoints_put = flatten([
+    for key, value in local.tables_need_put : {
+      "${key}" = {
+        "put-${key}" : "${local.api_base_url}${aws_api_gateway_resource.table[key].path}"
+      }
+    }
+    ]
+  )
+
+  api_endpoints_delete = flatten([
+    for key, value in local.tables_need_delete : {
+      "${key}" = {
+        "delete-${key}" : "${local.api_base_url}${aws_api_gateway_resource.table[key].path}"
+      }
+    }
+    ]
+  )
+  
+  api_endpoints = concat(local.api_endpoints_pkey, local.api_endpoints_skey, local.api_endpoints_post, local.api_endpoints_put, local.api_endpoints_delete)
 }

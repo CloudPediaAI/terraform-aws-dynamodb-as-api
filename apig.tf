@@ -91,8 +91,7 @@ resource "aws_api_gateway_deployment" "main_deploy" {
     redeployment = sha1(jsonencode([
       local.table_ids, local.pkey_ids, local.skey_ids,
       local.table_get_method_ids, local.pkey_get_method_ids, local.skey_get_method_ids,
-      local.table_get_int_ids, local.pkey_get_int_ids, local.skey_get_int_ids,
-      aws_api_gateway_authorizer.cognito[*].id
+      local.table_get_int_ids, local.pkey_get_int_ids, local.skey_get_int_ids
     ]))
   }
 
