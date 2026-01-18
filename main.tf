@@ -213,7 +213,10 @@ locals {
 
   # Since all tables/indexes will have a partition-key
   tables_need_pkey_get        = local.tables_need_get
-  tables_need_pkey_delete     = local.tables_need_delete
+  # tables_need_pkey_delete     = local.tables_need_delete
+  tables_need_pkey_delete = {
+    for key, table_info in local.tables_need_endpoint : key => table_info if(table_info != null && table_info.need_delete && !table_info.has_sort_key)
+  }
   tables_need_pkey_get_delete = local.tables_need_get_delete
 
   # if table has a SORT-KEY and allowed_operations contains R (Read)
