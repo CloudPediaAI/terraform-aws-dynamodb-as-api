@@ -9,18 +9,6 @@ resource "aws_api_gateway_method" "table_put" {
   rest_api_id = aws_api_gateway_resource.table[each.key].rest_api_id
 }
 
-# resource "aws_api_gateway_integration" "table_put_int" {
-#   for_each = aws_api_gateway_method.table_put
-
-#   http_method = each.value.http_method
-#   resource_id = each.value.resource_id
-#   rest_api_id = each.value.rest_api_id
-
-#   integration_http_method = "POST"
-#   type                    = local.integration_types.AWS
-#   uri                     = aws_lambda_function.lambda_for_put[0].invoke_arn
-# }
-
 # Method Response for PUT - Success 200
 resource "aws_api_gateway_method_response" "table_put_method_response_200" {
   for_each = aws_api_gateway_method.table_put
@@ -90,14 +78,14 @@ resource "aws_api_gateway_integration" "table_put_int" {
 
   request_templates = {
     "application/json" = <<EOF
-#set( $pKeyInput = $input.params('${lower(local.tables_need_get[each.key].partition_key.name)}') )
-#set( $sKeyInput = $input.params('${lower(local.tables_need_get[each.key].sort_key.name)}') )
+#set( $pKeyInput = $input.params('${lower(local.tables_need_put[each.key].partition_key.name)}') )
+#set( $sKeyInput = $input.params('${lower(local.tables_need_put[each.key].sort_key.name)}') )
 {
     "action_name": "UPDATE_ITEM",
     "entity_name": "${each.key}",
-    "table_name": "${local.tables_need_get[each.key].table_name}",
-    "partition_key": "${lower(local.tables_need_get[each.key].partition_key.name)}",
-    "sort_key": "${lower(local.tables_need_get[each.key].sort_key.name)}",
+    "table_name": "${local.tables_need_put[each.key].table_name}",
+    "partition_key": "${lower(local.tables_need_put[each.key].partition_key.name)}",
+    "sort_key": "${lower(local.tables_need_put[each.key].sort_key.name)}",
     "body": $input.body
 }
 EOF

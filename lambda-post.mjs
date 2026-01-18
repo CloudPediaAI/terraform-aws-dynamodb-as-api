@@ -2,7 +2,7 @@
 *  Function for DynamoDB-As-API
 *  Developed by CloudPedia.AI
 *  Created: 1/11/2026
-*  Last Modified: 1/11/2026
+*  Last Modified: 1/18/2026
 *  Build Version 1.0.0
 * * * * * * * * * * * * * * * * * * * * * * */
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
@@ -29,11 +29,13 @@ export const handler = async (event) => {
     };
     const errorCallback = (message, errorCode = 500) => {
         const errorResponse = JSON.stringify({
-            errorCode: "ERROR_" + errorCode,
+            errorName: "ERROR_" + errorCode,
+            errorCode: errorCode,
             headers: {
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*"
             },
+            status: "failed",
             errorMessage: message
         });
         throw new Error(errorResponse);

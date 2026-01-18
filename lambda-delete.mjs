@@ -2,7 +2,7 @@
 *  Function for DynamoDB-As-API
 *  Developed by CloudPedia.AI
 *  Created: 1/11/2026
-*  Last Modified: 1/17/2026
+*  Last Modified: 1/18/2026
 *  Build Version 1.0.0
 * * * * * * * * * * * * * * * * * * * * * * */
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
@@ -29,11 +29,13 @@ export const handler = async (event) => {
     };
     const errorCallback = (message, errorCode = 500) => {
         const errorResponse = JSON.stringify({
-            errorCode: "ERROR_" + errorCode,
+            errorName: "ERROR_" + errorCode,
+            errorCode: errorCode,
             headers: {
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*"
             },
+            status: "failed",
             errorMessage: message
         });
         throw new Error(errorResponse);
@@ -41,7 +43,7 @@ export const handler = async (event) => {
 
     try {
         const action_name = event.action_name;
-        const entity_name = event.entity_name;
+        const entity_name = event.entity_name.toUpperCase();
         const table_name = event.table_name;
         const partition_key = event.partition_key;
         const sort_key = event.sort_key;
@@ -54,20 +56,13 @@ export const handler = async (event) => {
             item_not_found_msg = "No item found in " + entity_name + " with provided Partition key (" + partition_key + ")";
         }
 
-        // console.log("body", event);
-        // if(!event){
-        //     return errorCallback(new Error("Keys not found to delete item from "+entity_name, 400));
-        // }
-
-        // const itemToDelete = event.body;
-
         if (!partition_key_value){
             return errorCallback("Partition key (" + partition_key + ") required to delete existing item from " + entity_name, 400);
         }
 
         if (sort_key) {
             if (!sort_key_value) {
-                return errorCallback("Sort key (" + sort_key + ") required to update existing item from " + entity_name, 400);
+                return errorCallback("Sort key (" + sort_key + ") required to delete existing item from " + entity_name, 400);
             }
         }
 
@@ -87,7 +82,6 @@ export const handler = async (event) => {
         }
         console.log("attValues", attValues);
 
-        // var condition_expression = "client_id = :vclient_id AND queue_id = :vqueue_id";
         var conditionExpr = "";
         for (var key in primaryKey) {
             if (conditionExpr.length > 0) {
@@ -114,7 +108,7 @@ export const handler = async (event) => {
         return successCallback(entity_name, deletedItem);
 
     } catch (error) {
-        console.error("Error adding item:", error.name);
+        console.error("Error deleting item:", error.name);
         if (error.name == "ConditionalCheckFailedException") {
             // user error response
             return errorCallback(item_not_found_msg, 404);

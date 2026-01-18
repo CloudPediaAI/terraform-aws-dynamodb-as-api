@@ -187,8 +187,6 @@ resource "aws_api_gateway_deployment" "main_deploy" {
       local.pkey_delete_int_ids, local.skey_delete_int_ids,
     ]))
   }
-# local.table_delete_method_ids, local.table_delete_int_ids, 
-
 
   lifecycle {
     create_before_destroy = true
