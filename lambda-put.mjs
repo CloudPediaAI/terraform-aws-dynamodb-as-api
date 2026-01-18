@@ -28,7 +28,7 @@ export const handler = async (event) => {
             })
         };
     };
-    const errorCallback = (message, errorCode = 500) => {
+    const errorCallback = (errorMessage, errorCode = 500) => {
         const errorResponse = JSON.stringify({
             errorName: "ERROR_" + errorCode,
             errorCode: errorCode,
@@ -36,8 +36,8 @@ export const handler = async (event) => {
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*"
             },
-            status: "failed",
-            errorMessage: message
+            status: "error",
+            message: errorMessage
         });
         throw new Error(errorResponse);
     };
