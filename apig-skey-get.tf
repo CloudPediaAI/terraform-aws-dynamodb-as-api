@@ -27,7 +27,7 @@ resource "aws_api_gateway_method_response" "skey_get_method_response" {
   rest_api_id = each.value.rest_api_id
   http_method = each.value.http_method
 
-  status_code = "200"
+  status_code = local.http_status.SUCCESS_200
   response_parameters = {
     "method.response.header.Access-Control-Allow-Origin" = true
   }
