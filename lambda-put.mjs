@@ -27,15 +27,16 @@ export const handler = async (event) => {
             })
         };
     };
-    const errorCallback = (error, errorCode = 500) => {
-        return JSON.stringify({
+    const errorCallback = (message, errorCode = 500) => {
+        const errorResponse = JSON.stringify({
+            errorCode: "ERROR_" + errorCode,
             headers: {
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*"
             },
-            errorCode: errorCode,
-            errorMessage: error.message
+            errorMessage: message
         });
+        throw new Error(errorResponse);
     };
 
     try {
@@ -52,7 +53,7 @@ export const handler = async (event) => {
 
         console.log("event", event);
         if (!event) {
-            return errorCallback(new Error("No " + entity_name + " found in the request payload", 400));
+            return errorCallback("No " + entity_name + " found in the request payload", 400);
         }
 
         const itemToUpdate = event.body;
@@ -64,14 +65,14 @@ export const handler = async (event) => {
         if ((partition_key in itemToUpdate) && itemToUpdate[partition_key]) {
             partition_key_value = itemToUpdate[partition_key];
         } else {
-            return errorCallback(new Error("Partition key (" + partition_key + ") required to update existing item in " + entity_name), 400);
+            return errorCallback("Partition key (" + partition_key + ") required to update existing item in " + entity_name, 400);
         }
 
         if (sort_key) {
             if ((sort_key in itemToUpdate) && itemToUpdate[sort_key]) {
                 sort_key_value = itemToUpdate[sort_key];
             } else {
-                return errorCallback(new Error("Sort key (" + sort_key + ") required to update existing item in " + entity_name), 400);
+                return errorCallback("Sort key (" + sort_key + ") required to update existing item in " + entity_name, 400);
             }
         }
 
@@ -104,7 +105,7 @@ export const handler = async (event) => {
         }
         console.log("attNames", attNames);
         if (Object.keys(attNames).length == 0) {
-            return errorCallback(new Error("No attributes found in the payload to update " + entity_name), 400);
+            return errorCallback("No attributes found in the payload to update " + entity_name, 400);
         }
 
         // prepare ExpressionAttributeValues using all values
@@ -146,10 +147,10 @@ export const handler = async (event) => {
         console.error("Error adding item:", error.name);
         if (error.name == "ConditionalCheckFailedException") {
             // user error response
-            return errorCallback(new Error(item_not_found_msg), 400);
+            return errorCallback(item_not_found_msg, 404);
         } else {
             // server error response
-            return errorCallback(error);
+            return errorCallback(error.message, 500);
         }
     }
 };

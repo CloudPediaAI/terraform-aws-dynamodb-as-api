@@ -27,15 +27,16 @@ export const handler = async (event) => {
             })
         };
     };
-    const errorCallback = (error, errorCode = 500) => {
-        return JSON.stringify({
+    const errorCallback = (message, errorCode = 500) => {
+        const errorResponse = JSON.stringify({
+            errorCode: "ERROR_" + errorCode,
             headers: {
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*"
             },
-            errorCode: errorCode,
-            errorMessage: error.message
+            errorMessage: message
         });
+        throw new Error(errorResponse);
     };
 
     try {
@@ -61,12 +62,12 @@ export const handler = async (event) => {
         // const itemToDelete = event.body;
 
         if (!partition_key_value){
-            return errorCallback(new Error("Partition key (" + partition_key + ") required to delete existing item from " + entity_name), 400);
+            return errorCallback("Partition key (" + partition_key + ") required to delete existing item from " + entity_name, 400);
         }
 
         if (sort_key) {
             if (!sort_key_value) {
-                return errorCallback(new Error("Sort key (" + sort_key + ") required to update existing item from " + entity_name), 400);
+                return errorCallback("Sort key (" + sort_key + ") required to update existing item from " + entity_name, 400);
             }
         }
 
@@ -116,10 +117,10 @@ export const handler = async (event) => {
         console.error("Error adding item:", error.name);
         if (error.name == "ConditionalCheckFailedException") {
             // user error response
-            return errorCallback(new Error(item_not_found_msg), 400);
+            return errorCallback(item_not_found_msg, 404);
         } else {
             // server error response
-            return errorCallback(error);
+            return errorCallback(error.message, 500);
         }
     }
 };

@@ -27,20 +27,21 @@ export const handler = async (event) => {
             })
         };
     };
-    const errorCallback = (error, errorCode = 500) => {
-        return JSON.stringify({
+    const errorCallback = (message, errorCode = 500) => {
+        const errorResponse = JSON.stringify({
+            errorCode: "ERROR_" + errorCode,
             headers: {
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*"
             },
-            errorCode: errorCode,
-            errorMessage: error.message
+            errorMessage: message
         });
+        throw new Error(errorResponse);
     };
 
     try {
         if (!event) {
-            return errorCallback(new Error("No payload found!", 400));
+            return errorCallback("No payload found!", 400);
         }
         const action_name = event.action_name;
         const entity_name = event.entity_name.toUpperCase();
@@ -51,7 +52,7 @@ export const handler = async (event) => {
         console.log("itemToAdd", itemToAdd);
 
         if (!itemToAdd) {
-            return errorCallback(new Error("No " + entity_name + " data found in the request payload", 400));
+            return errorCallback("No " + entity_name + " data found in the request payload", 400);
         }
 
         const condition_expression = "attribute_not_exists(" + partition_key + ")";
@@ -63,13 +64,13 @@ export const handler = async (event) => {
         if ((partition_key in itemToAdd) && itemToAdd[partition_key]) {
             partition_key_value = itemToAdd[partition_key];
         } else {
-            return errorCallback(new Error("Partition key <" + partition_key + "> required to add new " + entity_name), 400);
+            return errorCallback("Partition key <" + partition_key + "> required to add new " + entity_name, 400);
         }
 
         if (sort_key && ((sort_key in itemToAdd) && itemToAdd[sort_key])) {
             sort_key_value = itemToAdd[sort_key];
         } else {
-            return errorCallback(new Error("Sort key <" + sort_key + "> required to add new " + entity_name), 400);
+            return errorCallback("Sort key <" + sort_key + "> required to add new " + entity_name, 400);
         }
 
         // Parameters for DynamoDB PutCommand
@@ -90,10 +91,10 @@ export const handler = async (event) => {
         console.error("Error adding item:", error.name);
         if (error.name == "ConditionalCheckFailedException") {
             // input error response
-            return errorCallback(new Error(item_already_exists_msg), 400);
+            return errorCallback(item_already_exists_msg, 400);
         } else {
             // server error response
-            return errorCallback(error);
+            return errorCallback(error.message, 500);
         }
     }
 };
