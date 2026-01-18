@@ -22,8 +22,9 @@ export const handler = async (event) => {
                 "Access-Control-Allow-Origin": "*"
             },
             body: JSON.stringify({
+                status: "success",
                 message: "Deleted item from " + entity_name + " successfully",
-                item: deletedItem
+                deleted_item: deletedItem
             })
         };
     };

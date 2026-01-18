@@ -22,8 +22,9 @@ export const handler = async (event) => {
                 "Access-Control-Allow-Origin": "*"
             },
             body: JSON.stringify({
+                status: "success",
                 message: "New item added to " + entity_name + " successfully",
-                item: addedItem
+                added_item: addedItem
             })
         };
     };
