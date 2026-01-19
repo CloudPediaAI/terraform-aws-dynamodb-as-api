@@ -166,6 +166,28 @@ locals {
   ])
 }
 
+locals {
+  resources_changed = flatten([
+    length(local.table_ids) > 0 ? local.table_ids : [],
+    length(local.pkey_ids) > 0 ? local.pkey_ids : [],
+    length(local.skey_ids) > 0 ? local.skey_ids : [],
+    length(local.table_get_method_ids) > 0 ? local.table_get_method_ids : [],
+    length(local.pkey_get_method_ids) > 0 ? local.pkey_get_method_ids : [],
+    length(local.skey_get_method_ids) > 0 ? local.skey_get_method_ids : [],
+    length(local.table_get_int_ids) > 0 ? local.table_get_int_ids : [],
+    length(local.pkey_get_int_ids) > 0 ? local.pkey_get_int_ids : [],
+    length(local.skey_get_int_ids) > 0 ? local.skey_get_int_ids : [],
+    length(local.table_post_method_ids) > 0 ? local.table_post_method_ids : [],
+    length(local.table_post_int_ids) > 0 ? local.table_post_int_ids : [],
+    length(local.table_put_method_ids) > 0 ? local.table_put_method_ids : [],
+    length(local.table_put_int_ids) > 0 ? local.table_put_int_ids : [],
+    length(local.pkey_delete_method_ids) > 0 ? local.pkey_delete_method_ids : [],
+    length(local.skey_delete_method_ids) > 0 ? local.skey_delete_method_ids : [],
+    length(local.pkey_delete_int_ids) > 0 ? local.pkey_delete_int_ids : [],
+    length(local.skey_delete_int_ids) > 0 ? local.skey_delete_int_ids : [],
+  ])
+}
+
 resource "aws_api_gateway_deployment" "main_deploy" {
   rest_api_id = aws_api_gateway_rest_api.main.id
 
@@ -177,16 +199,18 @@ resource "aws_api_gateway_deployment" "main_deploy" {
     #       calculate a hash against whole resources. Be aware that using whole
     #       resources will show a difference after the initial implementation.
     #       It will stabilize to only change when resources change afterwards.
-    redeployment = sha1(jsonencode([
-      local.table_ids, local.pkey_ids, local.skey_ids,
-      local.table_get_method_ids, local.pkey_get_method_ids, local.skey_get_method_ids,
-      local.table_get_int_ids, local.pkey_get_int_ids, local.skey_get_int_ids,
-      local.table_post_method_ids, local.table_post_int_ids,
-      local.table_put_method_ids, local.table_put_int_ids,
-      local.pkey_delete_method_ids, local.skey_delete_method_ids,
-      local.pkey_delete_int_ids, local.skey_delete_int_ids,
-    ]))
+    redeployment = sha1(jsonencode(local.resources_changed))
   }
+
+    # redeployment = sha1(jsonencode([
+    #   local.table_ids, local.pkey_ids, local.skey_ids,
+    #   local.table_get_method_ids, local.pkey_get_method_ids, local.skey_get_method_ids,
+    #   local.table_get_int_ids, local.pkey_get_int_ids, local.skey_get_int_ids,
+    #   local.table_post_method_ids, local.table_post_int_ids,
+    #   local.table_put_method_ids, local.table_put_int_ids,
+    #   local.pkey_delete_method_ids, local.skey_delete_method_ids,
+    #   local.pkey_delete_int_ids, local.skey_delete_int_ids,
+    # ]))
 
   lifecycle {
     create_before_destroy = true
