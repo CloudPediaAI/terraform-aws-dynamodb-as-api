@@ -68,14 +68,14 @@ export const handler = async (event) => {
         if ((partition_key in itemToUpdate) && itemToUpdate[partition_key]) {
             partition_key_value = itemToUpdate[partition_key];
         } else {
-            return errorCallback("Partition key (" + partition_key + ") required to update existing item in " + entity_name, 400);
+            return errorCallback("Partition key (" + partition_key + ") is required to update an existing item in " + entity_name, 400);
         }
 
         if (sort_key) {
             if ((sort_key in itemToUpdate) && itemToUpdate[sort_key]) {
                 sort_key_value = itemToUpdate[sort_key];
             } else {
-                return errorCallback("Sort key (" + sort_key + ") required to update existing item in " + entity_name, 400);
+                return errorCallback("Sort key (" + sort_key + ") is required to update an existing item in " + entity_name, 400);
             }
         }
 

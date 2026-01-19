@@ -67,13 +67,13 @@ export const handler = async (event) => {
         if ((partition_key in itemToAdd) && itemToAdd[partition_key]) {
             partition_key_value = itemToAdd[partition_key];
         } else {
-            return errorCallback("Partition key <" + partition_key + "> required to add new " + entity_name, 400);
+            return errorCallback("Partition key <" + partition_key + "> is required to add a new " + entity_name, 400);
         }
 
         if (sort_key && ((sort_key in itemToAdd) && itemToAdd[sort_key])) {
             sort_key_value = itemToAdd[sort_key];
         } else {
-            return errorCallback("Sort key <" + sort_key + "> required to add new " + entity_name, 400);
+            return errorCallback("Sort key <" + sort_key + "> is required to add a new " + entity_name, 400);
         }
 
         // Parameters for DynamoDB PutCommand
