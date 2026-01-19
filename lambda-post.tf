@@ -1,6 +1,8 @@
 data "archive_file" "lambda_for_post" {
+  count = (length(local.tables_need_post) > 0) ? 1 : 0
+
   type        = "zip"
-  source_file = "lambda-post.mjs"
+  source_file = "${path.module}/lambda-post.mjs"
   output_path = "lambda-post.zip"
 }
 
@@ -12,7 +14,7 @@ resource "aws_lambda_function" "lambda_for_post" {
   role             = aws_iam_role.dynamodb_access_role[0].arn
   handler          = "lambda-post.handler"
   runtime          = "nodejs24.x"
-  source_code_hash = data.archive_file.lambda_for_post.output_base64sha256
+  source_code_hash = data.archive_file.lambda_for_post[0].output_base64sha256
 }
 
 resource "aws_lambda_permission" "lambda_for_post" {

@@ -1,17 +1,20 @@
 data "archive_file" "lambda_for_put" {
+  count = (length(local.tables_need_put) > 0) ? 1 : 0
+
   type        = "zip"
-  source_file = "lambda-put.mjs"
+  source_file = "${path.module}/lambda-put.mjs"
   output_path = "lambda-put.zip"
 }
 
 resource "aws_lambda_function" "lambda_for_put" {
   count = (length(local.tables_need_put) > 0) ? 1 : 0
+
   filename         = "lambda-put.zip"
   function_name    = "${var.api_name}-function-put"
   role             = aws_iam_role.dynamodb_access_role[0].arn
   handler          = "lambda-put.handler"
   runtime          = "nodejs24.x"
-  source_code_hash = data.archive_file.lambda_for_put.output_base64sha256
+  source_code_hash = data.archive_file.lambda_for_put[0].output_base64sha256
 }
 
 resource "aws_lambda_permission" "lambda_for_put" {
