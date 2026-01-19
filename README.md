@@ -1,5 +1,5 @@
 # AWS DynamoDB as API
-This terraform module will create a REST API to Read items from your DynamoDB tables (Create, Update, Delete will be added soon).  You just provide the list of Dynamodb tables, this module will read schema of all tables and will generate endpoints accordingly.
+This terraform module will create a REST API with full CRUD operations (Create, Read, Update, Delete) for your DynamoDB tables. You just provide the list of Dynamodb tables, this module will read schema of all tables and will generate endpoints accordingly.
 
 
 # Links
@@ -10,6 +10,34 @@ This terraform module will create a REST API to Read items from your DynamoDB ta
 
 
 # Release Notes
+## v1.3.0
+### Changes/Updates
+Added full CRUD operations support (Create, Update, Delete) to complement existing Read operations. For detailed changes, see [CHANGELOG.md](CHANGELOG.md#v130).
+
+### Key Features Added
+- POST endpoints for creating new items
+- PUT endpoints for updating existing items  
+- DELETE endpoints for removing items
+- Enhanced error handling and validation
+- Smart delete operations with sort-key awareness
+
+### Input Variable Changes
+None - Fully backward compatible
+
+### Output Variable Changes
+None
+
+## v1.2.0
+### Changes/Updates
+
+### Input Variable Changes
+#### 1. 
+
+### Output Variable Changes
+None
+
+
+
 ## v1.1.0
 ### Changes/Updates
 Enhanced this module to retrieve data from both Global and Local Seconday Indexes of any DynamoDB table

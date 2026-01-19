@@ -12,7 +12,7 @@ resource "aws_iam_role" "dynamodb_access_role" {
 			"Sid": "",
 			"Effect": "Allow",
 			"Principal": {
-				"Service": "apigateway.amazonaws.com"
+				"Service": ["apigateway.amazonaws.com", "lambda.amazonaws.com"]
 			},
 			"Action": "sts:AssumeRole"
 		}
@@ -29,7 +29,7 @@ locals {
     "dynamodb:Query",
     "dynamodb:ConditionCheckItem"
   ]
-  policy_actions_for_post   = ["dynamodb:PartiQLInsert"]
+  policy_actions_for_post   = ["dynamodb:PutItem"]
   policy_actions_for_put    = ["dynamodb:PutItem", "dynamodb:UpdateItem"]
   policy_actions_for_delete = ["dynamodb:DeleteItem"]
 }
@@ -47,7 +47,6 @@ data "aws_iam_policy_document" "dynamodb_access_policy" {
       )
     resources = [each.value.table_arn]
   }
-
 }
 
 resource "aws_iam_policy" "dynamodb_access_policy" {

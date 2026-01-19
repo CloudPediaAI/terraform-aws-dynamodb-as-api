@@ -8,6 +8,7 @@ terraform {
   }
 }
 
+data "aws_caller_identity" "current" {}
 data "aws_region" "default" {}
 
 locals {
@@ -31,6 +32,15 @@ locals {
     CUSTOM  = "CUSTOM",
     AWSIAM  = "AWS_IAM",
     COGNITO = "COGNITO_USER_POOLS"
+  }
+
+  http_status = {
+    SUCCESS_200 = "200",
+    CLIENT_ERR_400 = "400",
+    UNAUTH_401 = "401",
+    FORBIDDEN_403 = "403",
+    NOT_FOUND_404 = "404",
+    SERVER_ERR_500 = "500"
   }
 
   # tables without index
@@ -203,7 +213,10 @@ locals {
 
   # Since all tables/indexes will have a partition-key
   tables_need_pkey_get        = local.tables_need_get
-  tables_need_pkey_delete     = local.tables_need_delete
+  # tables_need_pkey_delete     = local.tables_need_delete
+  tables_need_pkey_delete = {
+    for key, table_info in local.tables_need_endpoint : key => table_info if(table_info != null && table_info.need_delete && !table_info.has_sort_key)
+  }
   tables_need_pkey_get_delete = local.tables_need_get_delete
 
   # if table has a SORT-KEY and allowed_operations contains R (Read)
@@ -253,5 +266,33 @@ locals {
     }
   ])
 
-  api_endpoints = concat(local.api_endpoints_pkey, local.api_endpoints_skey)
+
+  api_endpoints_post = flatten([
+    for key, value in local.tables_need_post : {
+      "${key}" = {
+        "post-${key}" : "${local.api_base_url}${aws_api_gateway_resource.table[key].path}"
+      }
+    }
+    ]
+  )
+
+  api_endpoints_put = flatten([
+    for key, value in local.tables_need_put : {
+      "${key}" = {
+        "put-${key}" : "${local.api_base_url}${aws_api_gateway_resource.table[key].path}"
+      }
+    }
+    ]
+  )
+
+  api_endpoints_delete = flatten([
+    for key, value in local.tables_need_delete : {
+      "${key}" = {
+        "delete-${key}" : "${local.api_base_url}${aws_api_gateway_resource.table[key].path}"
+      }
+    }
+    ]
+  )
+  
+  api_endpoints = concat(local.api_endpoints_pkey, local.api_endpoints_skey, local.api_endpoints_post, local.api_endpoints_put, local.api_endpoints_delete)
 }
