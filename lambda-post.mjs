@@ -7,6 +7,7 @@
 * * * * * * * * * * * * * * * * * * * * * * */
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
+import crypto from 'crypto';
 
 // Create DynamoDB client
 const client = new DynamoDBClient({ region: "us-west-2" });
@@ -28,6 +29,7 @@ export const handler = async (event) => {
             })
         };
     };
+
     const errorCallback = (errorMessage, errorCode = 500) => {
         const errorResponse = JSON.stringify({
             errorName: "ERROR_" + errorCode,
@@ -42,6 +44,23 @@ export const handler = async (event) => {
         throw new Error(errorResponse);
     };
 
+    const generateUniqId = (key_type) => {
+        if (key_type === "N") {
+            return Date.now();
+        } else {
+            return crypto.randomUUID();
+        }
+    }
+
+    const validateKeyType = (entity_name, key_name, key_type, key_value) => {
+        if(key_type === "N" && typeof key_value === "string") {
+            errorCallback("Value of Key <" + key_name + "> must be a number for " + entity_name, 400);
+        }
+        if(key_type === "S" && typeof key_value === "number") {
+            errorCallback("Value of Key <" + key_name + "> must be a string for " + entity_name, 400);
+        }
+    }
+
     try {
         if (!event) {
             return errorCallback("No payload found!", 400);
@@ -50,7 +69,9 @@ export const handler = async (event) => {
         const entity_name = event.entity_name.toUpperCase();
         const table_name = event.table_name;
         const partition_key = event.partition_key;
+        const partition_key_type = event.partition_key_type;
         const sort_key = event.sort_key;
+        const sort_key_type = event.sort_key_type;
         const itemToAdd = event.body;
         console.log("itemToAdd", itemToAdd);
 
@@ -66,14 +87,26 @@ export const handler = async (event) => {
 
         if ((partition_key in itemToAdd) && itemToAdd[partition_key]) {
             partition_key_value = itemToAdd[partition_key];
+            validateKeyType(entity_name, partition_key, partition_key_type, partition_key_value);
         } else {
-            return errorCallback("Partition key <" + partition_key + "> is required to add a new " + entity_name, 400);
+            if (process.env.AUTO_GEN_UNIQ_ID_FOR_MISSING_KEYS === "true") {
+                partition_key_value = generateUniqId(partition_key_type);
+                itemToAdd[partition_key] = partition_key_value;
+            } else {
+                return errorCallback("Partition key <" + partition_key + "> is required to add a new " + entity_name, 400);
+            }
         }
 
         if (sort_key && ((sort_key in itemToAdd) && itemToAdd[sort_key])) {
             sort_key_value = itemToAdd[sort_key];
+            validateKeyType(entity_name, sort_key, sort_key_type, sort_key_value);
         } else {
-            return errorCallback("Sort key <" + sort_key + "> is required to add a new " + entity_name, 400);
+            if (process.env.AUTO_GEN_UNIQ_ID_FOR_MISSING_KEYS === "true") {
+                sort_key_value = generateUniqId(sort_key_type);
+                itemToAdd[sort_key] = sort_key_value;
+            } else {
+                return errorCallback("Sort key <" + sort_key + "> is required to add a new " + entity_name, 400);
+            }
         }
 
         // Parameters for DynamoDB PutCommand

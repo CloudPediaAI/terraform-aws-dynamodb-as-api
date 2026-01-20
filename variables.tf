@@ -83,3 +83,9 @@ variable "tags" {
     created_by = "Terraform Module CloudPediaAI/DynamoDB-as-API/aws"
   }
 }
+
+variable "auto_unique_id_for_missing_keys" {
+  type        = bool
+  default     = false
+  description = "Automatically generate a Unique ID if Partition Key or Sort Key is missing while doing Adding New Items"
+}

@@ -78,14 +78,14 @@ resource "aws_api_gateway_integration" "table_put_int" {
 
   request_templates = {
     "application/json" = <<EOF
-#set( $pKeyInput = $input.params('${lower(local.tables_need_put[each.key].partition_key.name)}') )
-#set( $sKeyInput = $input.params('${lower(local.tables_need_put[each.key].sort_key.name)}') )
 {
     "action_name": "UPDATE_ITEM",
     "entity_name": "${each.key}",
     "table_name": "${local.tables_need_put[each.key].table_name}",
     "partition_key": "${lower(local.tables_need_put[each.key].partition_key.name)}",
+    "partition_key_type": "${local.tables_need_put[each.key].partition_key.type}",
     "sort_key": "${lower(local.tables_need_put[each.key].sort_key.name)}",
+    "sort_key_type": "${local.tables_need_put[each.key].sort_key.type}",
     "body": $input.body
 }
 EOF

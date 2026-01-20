@@ -28,6 +28,7 @@ export const handler = async (event) => {
             })
         };
     };
+
     const errorCallback = (errorMessage, errorCode = 500) => {
         const errorResponse = JSON.stringify({
             errorName: "ERROR_" + errorCode,
@@ -42,12 +43,24 @@ export const handler = async (event) => {
         throw new Error(errorResponse);
     };
 
+    const validateKeyType = (entity_name, key_name, key_type, key_value) => {
+        if(key_type === "N" && typeof key_value === "string") {
+            errorCallback("Value of Key <" + key_name + "> must be a number for " + entity_name, 400);
+        }
+        if(key_type === "S" && typeof key_value === "number") {
+            errorCallback("Value of Key <" + key_name + "> must be a string for " + entity_name, 400);
+        }
+    }
+
     try {
         const action_name = event.action_name;
         const entity_name = event.entity_name.toUpperCase();
         const table_name = event.table_name;
         const partition_key = event.partition_key;
+        const partition_key_type = event.partition_key_type;
         const sort_key = event.sort_key;
+        const sort_key_type = event.sort_key_type;
+
         if (sort_key) {
             item_not_found_msg = "No item found in " + entity_name + " with provided Partition key (" + partition_key + ") and Sort key (" + sort_key + ")";
         } else {
@@ -67,6 +80,7 @@ export const handler = async (event) => {
 
         if ((partition_key in itemToUpdate) && itemToUpdate[partition_key]) {
             partition_key_value = itemToUpdate[partition_key];
+            validateKeyType(entity_name, partition_key, partition_key_type, partition_key_value);
         } else {
             return errorCallback("Partition key (" + partition_key + ") is required to update an existing item in " + entity_name, 400);
         }
@@ -74,6 +88,7 @@ export const handler = async (event) => {
         if (sort_key) {
             if ((sort_key in itemToUpdate) && itemToUpdate[sort_key]) {
                 sort_key_value = itemToUpdate[sort_key];
+                validateKeyType(entity_name, sort_key, sort_key_type, sort_key_value);
             } else {
                 return errorCallback("Sort key (" + sort_key + ") is required to update an existing item in " + entity_name, 400);
             }

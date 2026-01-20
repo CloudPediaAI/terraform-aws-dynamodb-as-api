@@ -15,6 +15,12 @@ resource "aws_lambda_function" "lambda_for_put" {
   handler          = "lambda-put.handler"
   runtime          = "nodejs24.x"
   source_code_hash = data.archive_file.lambda_for_put[0].output_base64sha256
+
+  environment {
+    variables = {
+      AUTO_GEN_UNIQ_ID_FOR_MISSING_KEYS = var.auto_unique_id_for_missing_keys
+    }
+  }
 }
 
 resource "aws_lambda_permission" "lambda_for_put" {
