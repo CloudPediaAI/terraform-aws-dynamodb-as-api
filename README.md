@@ -1,5 +1,14 @@
 # AWS DynamoDB as API
-This terraform module will create a REST API with full CRUD operations (Create, Read, Update, Delete) for your DynamoDB tables. You just provide the list of Dynamodb tables, this module will read schema of all tables and will generate endpoints accordingly.
+This terraform module will create a REST API with full CRUD operations (Create, Read, Update, Delete) for your DynamoDB tables. You just provide the list of DynamoDB tables, this module will read schema of all tables and will generate endpoints accordingly.
+
+## ✨ Key Features
+- **Full CRUD Operations**: Complete Create, Read, Update, Delete functionality
+- **Auto-Schema Detection**: Automatically reads DynamoDB table schemas
+- **Smart Key Management**: Auto-generation of unique IDs for missing keys
+- **Type Validation**: Ensures key values match DynamoDB types (String/Number)
+- **Sort Key Awareness**: Intelligent handling of tables with and without sort keys
+- **Custom Domain Support**: Optional custom domain configuration
+- **Cognito Authorization**: Built-in support for Cognito user pools
 
 
 # Links
@@ -10,6 +19,32 @@ This terraform module will create a REST API with full CRUD operations (Create, 
 
 
 # Release Notes
+## v1.3.2
+### Changes/Updates
+Enhanced CRUD operations with automatic unique ID generation and key type validation. For detailed changes, see [CHANGELOG.md](CHANGELOG.md#v132).
+
+### Key Features Added
+- **Auto-Generate Unique IDs**: Automatically generate unique identifiers for missing partition or sort keys during item creation
+- **Key Type Validation**: Enhanced validation to ensure key values match their expected DynamoDB types (String vs Number)
+- **Smart ID Generation**: 
+  - Timestamp-based numeric IDs for Number type keys
+  - UUID-based string IDs for String type keys
+- **Enhanced Error Handling**: Better validation messages and type-specific error responses
+
+### Input Variable Changes
+#### 1. auto_unique_id_for_missing_keys
+New boolean variable to control automatic unique ID generation for missing keys during POST operations.
+```hcl
+variable "auto_unique_id_for_missing_keys" {
+  type        = bool
+  default     = false
+  description = "Automatically generate a Unique ID if Partition Key or Sort Key is missing while doing Adding New Items"
+}
+```
+
+### Output Variable Changes
+None
+
 ## v1.3.0
 ### Changes/Updates
 Added full CRUD operations support (Create, Update, Delete) to complement existing Read operations. For detailed changes, see [CHANGELOG.md](CHANGELOG.md#v130).

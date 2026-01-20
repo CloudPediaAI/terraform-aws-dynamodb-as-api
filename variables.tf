@@ -87,5 +87,5 @@ variable "tags" {
 variable "auto_unique_id_for_missing_keys" {
   type        = bool
   default     = false
-  description = "Automatically generate a Unique ID if Partition Key or Sort Key is missing while doing Adding New Items"
+  description = "Automatically generate a Unique ID if Partition Key or Sort Key is missing while doing Adding New Items (Timestamp-based numeric IDs Number type and UUID for String type)"
 }
