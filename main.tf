@@ -16,7 +16,8 @@ locals {
     GET    = "GET",
     POST   = "POST",
     PUT    = "PUT",
-    DELETE = "DELETE"
+    DELETE = "DELETE",
+    OPTIONS = "OPTIONS"
   }
 
   integration_types = {
@@ -295,4 +296,34 @@ locals {
   )
   
   api_endpoints = concat(local.api_endpoints_pkey, local.api_endpoints_skey, local.api_endpoints_post, local.api_endpoints_put, local.api_endpoints_delete)
+
+  allow_headers = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  allow_all_methods = "'OPTIONS,GET,POST,PUT,DELETE'"
+  allow_get_delete_methods = "'OPTIONS,GET,DELETE'"
+  allow_post_put_delete_methods = "'OPTIONS,GET,POST,PUT'"
+
+  res_params_common = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+
+  res_params_responses_common = {
+    "method.response.header.Access-Control-Allow-Headers" = local.allow_headers,
+    "method.response.header.Access-Control-Allow-Methods" = local.allow_all_methods,
+    "method.response.header.Access-Control-Allow-Origin"  = var.cors_allowed_origins
+  }
+
+  res_params_responses_get_delete = {
+    "method.response.header.Access-Control-Allow-Headers" = local.allow_headers,
+    "method.response.header.Access-Control-Allow-Methods" = local.allow_get_delete_methods,
+    "method.response.header.Access-Control-Allow-Origin"  = var.cors_allowed_origins
+  }
+
+  res_params_responses_get_post_put = {
+    "method.response.header.Access-Control-Allow-Headers" = local.allow_headers,
+    "method.response.header.Access-Control-Allow-Methods" = local.allow_post_put_delete_methods,
+    "method.response.header.Access-Control-Allow-Origin"  = var.cors_allowed_origins
+  }
+
 }

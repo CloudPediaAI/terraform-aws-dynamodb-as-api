@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.3.3] - 2026-01-23
+
+### ✨ Added
+- **Enhanced CORS Support**: Comprehensive Cross-Origin Resource Sharing (CORS) configuration
+  - Added `cors_allowed_origins` variable to control CORS allowed origins (default: `'*'`)
+  - Added OPTIONS endpoints for all API Gateway resources (tables, primary keys, sort keys)
+  - Implemented proper CORS preflight request handling
+- **Centralized Response Parameter Management**: Streamlined API Gateway response configuration
+  - Added centralized local variables for consistent CORS header management
+  - Added method-specific response parameter configurations
+  - Created reusable response parameter templates for different endpoint types
+
+### 🔧 Changed
+- **Standardized CORS Headers**: Replaced hardcoded CORS headers with centralized configuration
+  - All API Gateway method responses now use consistent CORS header configuration
+  - Moved from inline CORS definitions to reusable local variables
+  - Updated all endpoint files to use centralized response parameter management
+- **Enhanced API Gateway Structure**: Improved organization and maintainability
+  - Added OPTIONS method support to `local.http_methods`
+  - Standardized response parameter handling across all endpoints
+  - Consistent CORS handling for GET, POST, PUT, DELETE, and OPTIONS methods
+
+### 📁 New Files Added
+- `apig-pkey-options.tf` - OPTIONS method configuration for primary key endpoints
+- `apig-skey-options.tf` - OPTIONS method configuration for sort key endpoints  
+- `apig-table-options.tf` - OPTIONS method configuration for table endpoints
+
+### 🌐 CORS Configuration
+- **Configurable Origins**: Set allowed origins via `cors_allowed_origins` variable
+- **Method-Specific Headers**: Different CORS configurations for different endpoint types
+  - GET/DELETE endpoints: `'OPTIONS,GET,DELETE'`
+  - POST/PUT endpoints: `'OPTIONS,GET,POST,PUT'`
+  - Comprehensive header support: `'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'`
+
+### 🔄 Migration Notes
+- This version is backward compatible with existing v1.3.2 installations
+- CORS origins default to `'*'` (allow all) - customize via `cors_allowed_origins` variable
+- No changes required to existing variable configurations
+- Enhanced web browser compatibility with proper preflight request support
+
+### 🎯 Breaking Changes
+- None - This is a feature enhancement release that maintains full backward compatibility
+
+---
+
 ## [v1.3.2] - 2026-01-19
 
 ### ✨ Added

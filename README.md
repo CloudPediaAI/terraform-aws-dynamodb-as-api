@@ -7,6 +7,7 @@ This terraform module will create a REST API with full CRUD operations (Create, 
 - **Smart Key Management**: Auto-generation of unique IDs for missing keys
 - **Type Validation**: Ensures key values match DynamoDB types (String/Number)
 - **Sort Key Awareness**: Intelligent handling of tables with and without sort keys
+- **Enhanced CORS Support**: Comprehensive Cross-Origin Resource Sharing with configurable origins
 - **Custom Domain Support**: Optional custom domain configuration
 - **Cognito Authorization**: Built-in support for Cognito user pools
 
@@ -19,6 +20,30 @@ This terraform module will create a REST API with full CRUD operations (Create, 
 
 
 # Release Notes
+## v1.3.3
+### Changes/Updates
+Enhanced CORS support and API Gateway standardization with comprehensive Cross-Origin Resource Sharing configuration. For detailed changes, see [CHANGELOG.md](CHANGELOG.md#v133).
+
+### Key Features Added
+- **Enhanced CORS Support**: Comprehensive Cross-Origin Resource Sharing configuration with configurable origins
+- **OPTIONS Endpoints**: Added proper preflight request handling for all API Gateway resources
+- **Centralized Response Management**: Streamlined API Gateway response parameter configuration
+- **Web Browser Compatibility**: Improved support for web applications with proper CORS headers
+
+### Input Variable Changes
+#### 1. cors_allowed_origins
+New string variable to control CORS allowed origins for the API Gateway.
+```hcl
+variable "cors_allowed_origins" {
+  description = "CORS allowed origins for the API Gateway"
+  type        = string
+  default     = "'*'"
+}
+```
+
+### Output Variable Changes
+None
+
 ## v1.3.2
 ### Changes/Updates
 Enhanced CRUD operations with automatic unique ID generation and key type validation. For detailed changes, see [CHANGELOG.md](CHANGELOG.md#v132).
