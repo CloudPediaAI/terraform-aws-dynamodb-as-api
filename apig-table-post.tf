@@ -18,9 +18,7 @@ resource "aws_api_gateway_method_response" "table_post_method_response_200" {
   http_method = each.value.http_method
 
   status_code = local.http_status.SUCCESS_200
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin" = true
-  }
+  response_parameters = local.res_params_common
 }
 
 # Method Response for POST - Input/Client Error 400
@@ -35,9 +33,7 @@ resource "aws_api_gateway_method_response" "table_post_method_response_400" {
   response_models = {
     "application/json" = "Error"
   }
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin" = true
-  }
+  response_parameters = local.res_params_common
 }
 
 # Method Response for POST - Not Found Error 404
@@ -52,9 +48,7 @@ resource "aws_api_gateway_method_response" "table_post_method_response_404" {
   response_models = {
     "application/json" = "Error"
   }
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin" = true
-  }
+  response_parameters = local.res_params_common
 }
 
 # Method Response for POST - Server Error 500
@@ -66,9 +60,7 @@ resource "aws_api_gateway_method_response" "table_post_method_response_500" {
   http_method = each.value.http_method
 
   status_code = local.http_status.SERVER_ERR_500
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin" = true
-  }
+  response_parameters = local.res_params_common
 }
 
 # Integration Response for POST
@@ -110,9 +102,7 @@ resource "aws_api_gateway_integration_response" "table_post_int_response_200" {
 
   status_code = aws_api_gateway_method_response.table_post_method_response_200[each.key].status_code
 
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin" = "'*'"
-  }
+  response_parameters = local.res_param_responses_post
   response_templates = {
     "application/json" = <<EOF
 #set($inputRoot = $input.path('$'))
@@ -132,6 +122,8 @@ resource "aws_api_gateway_integration_response" "table_post_int_response_400" {
 
   status_code       = aws_api_gateway_method_response.table_post_method_response_400[each.key].status_code
   selection_pattern = ".*ERROR_400.*"
+
+  response_parameters = local.res_param_responses_post
 
   # Optional: Transform the output using a mapping template
   response_templates = {
@@ -154,6 +146,8 @@ resource "aws_api_gateway_integration_response" "table_post_int_response_404" {
   status_code       = aws_api_gateway_method_response.table_post_method_response_404[each.key].status_code
   selection_pattern = ".*ERROR_404.*"
 
+  response_parameters = local.res_param_responses_post
+
   # Optional: Transform the output using a mapping template
   response_templates = {
     "application/json" = <<EOF
@@ -174,6 +168,8 @@ resource "aws_api_gateway_integration_response" "table_post_int_response_500" {
 
   status_code       = aws_api_gateway_method_response.table_post_method_response_500[each.key].status_code
   selection_pattern = ".*ERROR_500.*"
+
+  response_parameters = local.res_param_responses_post
 
   # Optional: Transform the output using a mapping template
   response_templates = {

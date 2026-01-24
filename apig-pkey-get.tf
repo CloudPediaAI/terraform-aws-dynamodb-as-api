@@ -28,9 +28,7 @@ resource "aws_api_gateway_method_response" "pkey_get_method_response" {
   http_method = each.value.http_method
 
   status_code = local.http_status.SUCCESS_200
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin" = true
-  }
+  response_parameters = local.res_params_common
 }
 
 resource "aws_api_gateway_integration" "pkey_get_int" {
@@ -89,9 +87,7 @@ resource "aws_api_gateway_integration_response" "pkey_get_int_response" {
   http_method = each.value.http_method
 
   status_code = aws_api_gateway_method_response.pkey_get_method_response[each.key].status_code
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin" = "'*'"
-  }
+  response_parameters = local.res_param_responses_get
   response_templates = {
     "application/json" = <<EOF
 #set($inputRoot = $input.path('$'))

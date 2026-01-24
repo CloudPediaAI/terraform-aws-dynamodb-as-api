@@ -92,7 +92,7 @@ resource "aws_api_gateway_integration_response" "pkey_delete_int_response_200" {
   http_method = each.value.http_method
 
   status_code = aws_api_gateway_method_response.pkey_delete_method_response_200[each.key].status_code
-  response_parameters = local.res_params_responses_get_delete
+  response_parameters = local.res_param_responses_get_delete
   response_templates = {
     "application/json" = <<EOF
 #set($inputRoot = $input.path('$'))
@@ -113,7 +113,7 @@ resource "aws_api_gateway_integration_response" "pkey_delete_int_response_400" {
   status_code       = aws_api_gateway_method_response.pkey_delete_method_response_400[each.key].status_code
   selection_pattern = ".*ERROR_400.*"
 
-  response_parameters = local.res_params_responses_get_delete
+  response_parameters = local.res_param_responses_get_delete
 
   response_templates = {
     "application/json" = <<EOF
@@ -135,7 +135,7 @@ resource "aws_api_gateway_integration_response" "pkey_delete_int_response_404" {
   status_code       = aws_api_gateway_method_response.pkey_delete_method_response_404[each.key].status_code
   selection_pattern = ".*ERROR_404.*"
 
-  response_parameters = local.res_params_responses_get_delete
+  response_parameters = local.res_param_responses_get_delete
 
   response_templates = {
     "application/json" = <<EOF
@@ -157,7 +157,7 @@ resource "aws_api_gateway_integration_response" "pkey_delete_int_response_500" {
   status_code       = aws_api_gateway_method_response.pkey_delete_method_response_500[each.key].status_code
   selection_pattern = ".*ERROR_500.*"
 
-  response_parameters = local.res_params_responses_get_delete
+  response_parameters = local.res_param_responses_get_delete
   response_templates = {
     "application/json" = <<EOF
 #set($inputRoot = $input.path('$'))

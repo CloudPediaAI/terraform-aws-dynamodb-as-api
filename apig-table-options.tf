@@ -51,7 +51,7 @@ resource "aws_api_gateway_integration_response" "table_options_200" {
   http_method = aws_api_gateway_method.table_options[each.key].http_method
   status_code = aws_api_gateway_method_response.table_options_200[each.key].status_code
 
-  response_parameters = local.res_params_responses_get_post_put
+  response_parameters = local.res_param_responses_get_post_put
 
   depends_on = [
     aws_api_gateway_method.table_options,

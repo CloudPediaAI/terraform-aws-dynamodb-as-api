@@ -18,9 +18,7 @@ resource "aws_api_gateway_method_response" "skey_delete_method_response_200" {
   http_method = each.value.http_method
 
   status_code = local.http_status.SUCCESS_200
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin" = true
-  }
+  response_parameters = local.res_params_common
 }
 
 # Method Response for DELETE - Input/Client Error 400
@@ -32,9 +30,7 @@ resource "aws_api_gateway_method_response" "skey_delete_method_response_400" {
   http_method = each.value.http_method
 
   status_code = local.http_status.CLIENT_ERR_400
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin" = true
-  }
+  response_parameters = local.res_params_common
 }
 
 # Method Response for DELETE - Not Found Error 404
@@ -46,9 +42,7 @@ resource "aws_api_gateway_method_response" "skey_delete_method_response_404" {
   http_method = each.value.http_method
 
   status_code = local.http_status.NOT_FOUND_404
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin" = true
-  }
+  response_parameters = local.res_params_common
 }
 
 # Method Response for DELETE - Server Error 500
@@ -60,9 +54,7 @@ resource "aws_api_gateway_method_response" "skey_delete_method_response_500" {
   http_method = each.value.http_method
 
   status_code = local.http_status.SERVER_ERR_500
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin" = true
-  }
+  response_parameters = local.res_params_common
 }
 
 resource "aws_api_gateway_integration" "skey_delete_int" {
@@ -103,9 +95,7 @@ resource "aws_api_gateway_integration_response" "skey_delete_int_response_200" {
   http_method = each.value.http_method
 
   status_code = aws_api_gateway_method_response.skey_delete_method_response_200[each.key].status_code
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin" = "'*'"
-  }
+  response_parameters = local.res_param_responses_delete
   response_templates = {
     "application/json" = <<EOF
 #set($inputRoot = $input.path('$'))
@@ -126,9 +116,7 @@ resource "aws_api_gateway_integration_response" "skey_delete_int_response_400" {
   status_code       = aws_api_gateway_method_response.skey_delete_method_response_400[each.key].status_code
   selection_pattern = ".*ERROR_400.*"
 
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin" = "'*'"
-  }
+  response_parameters = local.res_param_responses_delete
   response_templates = {
     "application/json" = <<EOF
 #set($inputRoot = $input.path('$'))
@@ -149,9 +137,7 @@ resource "aws_api_gateway_integration_response" "skey_delete_int_response_404" {
   status_code       = aws_api_gateway_method_response.skey_delete_method_response_404[each.key].status_code
   selection_pattern = ".*ERROR_404.*"
 
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin" = "'*'"
-  }
+  response_parameters = local.res_param_responses_delete
   response_templates = {
     "application/json" = <<EOF
 #set($inputRoot = $input.path('$'))
@@ -172,9 +158,7 @@ resource "aws_api_gateway_integration_response" "skey_delete_int_response_500" {
   status_code       = aws_api_gateway_method_response.skey_delete_method_response_500[each.key].status_code
   selection_pattern = ".*ERROR_500.*"
 
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin" = "'*'"
-  }
+  response_parameters = local.res_param_responses_delete
   response_templates = {
     "application/json" = <<EOF
 #set($inputRoot = $input.path('$'))

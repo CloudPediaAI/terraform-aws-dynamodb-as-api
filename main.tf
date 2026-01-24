@@ -299,6 +299,10 @@ locals {
 
   allow_headers = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
   allow_all_methods = "'OPTIONS,GET,POST,PUT,DELETE'"
+  allow_get_methods = "'OPTIONS,GET'"
+  allow_post_methods = "'OPTIONS,POST'"
+  allow_put_methods = "'OPTIONS,PUT'"
+  allow_delete = "'OPTIONS,DELETE'"
   allow_get_delete_methods = "'OPTIONS,GET,DELETE'"
   allow_post_put_delete_methods = "'OPTIONS,GET,POST,PUT'"
 
@@ -308,19 +312,43 @@ locals {
     "method.response.header.Access-Control-Allow-Origin"  = true
   }
 
-  res_params_responses_common = {
+  res_param_responses_common = {
     "method.response.header.Access-Control-Allow-Headers" = local.allow_headers,
     "method.response.header.Access-Control-Allow-Methods" = local.allow_all_methods,
     "method.response.header.Access-Control-Allow-Origin"  = var.cors_allowed_origins
   }
 
-  res_params_responses_get_delete = {
+  res_param_responses_get = {
+    "method.response.header.Access-Control-Allow-Headers" = local.allow_headers,
+    "method.response.header.Access-Control-Allow-Methods" = local.allow_get_methods,
+    "method.response.header.Access-Control-Allow-Origin"  = var.cors_allowed_origins
+  }
+
+  res_param_responses_post = {
+    "method.response.header.Access-Control-Allow-Headers" = local.allow_headers,
+    "method.response.header.Access-Control-Allow-Methods" = local.allow_post_methods,
+    "method.response.header.Access-Control-Allow-Origin"  = var.cors_allowed_origins
+  }
+
+  res_param_responses_put = {
+    "method.response.header.Access-Control-Allow-Headers" = local.allow_headers,
+    "method.response.header.Access-Control-Allow-Methods" = local.allow_put_methods,
+    "method.response.header.Access-Control-Allow-Origin"  = var.cors_allowed_origins
+  }
+
+  res_param_responses_delete = {
+    "method.response.header.Access-Control-Allow-Headers" = local.allow_headers,
+    "method.response.header.Access-Control-Allow-Methods" = local.allow_delete,
+    "method.response.header.Access-Control-Allow-Origin"  = var.cors_allowed_origins
+  }
+
+  res_param_responses_get_delete = {
     "method.response.header.Access-Control-Allow-Headers" = local.allow_headers,
     "method.response.header.Access-Control-Allow-Methods" = local.allow_get_delete_methods,
     "method.response.header.Access-Control-Allow-Origin"  = var.cors_allowed_origins
   }
 
-  res_params_responses_get_post_put = {
+  res_param_responses_get_post_put = {
     "method.response.header.Access-Control-Allow-Headers" = local.allow_headers,
     "method.response.header.Access-Control-Allow-Methods" = local.allow_post_put_delete_methods,
     "method.response.header.Access-Control-Allow-Origin"  = var.cors_allowed_origins
