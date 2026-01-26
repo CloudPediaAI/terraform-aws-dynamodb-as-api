@@ -90,6 +90,34 @@ variable "auto_unique_id_for_missing_keys" {
   description = "Automatically generate a Unique ID if Partition Key or Sort Key is missing while doing Adding New Items (Timestamp-based numeric IDs Number type and UUID for String type)"
 }
 
+variable "auto_audit_fields_update" {
+  type        = bool
+  default     = false
+  description = "Automatically add or update audit fields (created_at, created_by, updated_at, updated_by) when items are added or modified in the DynamoDB tables"
+}
+
+variable "audit_field_for_created_at" {
+  type        = string
+  default     = "created_at"
+  description = "Field name for Created At audit field (if auto_audit_fields_update is enabled)"
+}
+
+variable "audit_field_for_updated_at" {
+  type        = string
+  default     = "updated_at"
+  description = "Field name for Updated At audit field (if auto_audit_fields_update is enabled)"
+}
+
+variable "audit_field_timestamp_format" {
+  type = string
+  default = "ISO-8601"
+  description = "Format for timestamp in audit fields (if auto_audit_fields_update is enabled). Options are 'ISO-8601' or 'UNIX-EPOCH'"
+  validation {
+    condition     = contains(["ISO-8601", "UNIX-EPOCH"], var.audit_field_timestamp_format)
+    error_message = "audit_field_timestamp_format must be either 'ISO-8601' or 'UNIX-EPOCH'"
+  }
+}
+
 variable "cors_allowed_origins" {
   description = "CORS allowed origins for the API Gateway"
   type        = string

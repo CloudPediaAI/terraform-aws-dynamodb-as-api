@@ -109,6 +109,14 @@ export const handler = async (event) => {
             }
         }
 
+        if(event.audit_field_ct && event.audit_field_ct !=""){
+            if(event.audit_ts_format === "ISO-8601"){
+                itemToAdd[event.audit_field_ct] = new Date().toISOString();
+            } else {
+                itemToAdd[event.audit_field_ct] = Date.now();
+            }
+        }
+
         // Parameters for DynamoDB PutCommand
         const params = {
             TableName: table_name,

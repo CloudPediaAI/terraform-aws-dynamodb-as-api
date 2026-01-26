@@ -14,7 +14,7 @@ const dynamoDb = DynamoDBDocumentClient.from(client);
 var item_not_found_msg = "No item found to update with the provided keys";
 
 export const handler = async (event) => {
-    const successCallback = (entity_name, addedItem) => {
+    const successCallback = (entity_name, updatedItem) => {
         return {
             statusCode: 200,
             headers: {
@@ -24,7 +24,7 @@ export const handler = async (event) => {
             body: JSON.stringify({
                 status: "success",
                 message: "Updated existing item in " + entity_name + " successfully",
-                updated_item: addedItem
+                updated_item: updatedItem
             })
         };
     };
@@ -44,10 +44,10 @@ export const handler = async (event) => {
     };
 
     const validateKeyType = (entity_name, key_name, key_type, key_value) => {
-        if(key_type === "N" && typeof key_value === "string") {
+        if (key_type === "N" && typeof key_value === "string") {
             errorCallback("Value of Key <" + key_name + "> must be a number for " + entity_name, 400);
         }
-        if(key_type === "S" && typeof key_value === "number") {
+        if (key_type === "S" && typeof key_value === "number") {
             errorCallback("Value of Key <" + key_name + "> must be a string for " + entity_name, 400);
         }
     }
@@ -101,6 +101,15 @@ export const handler = async (event) => {
             primaryKey[sort_key] = sort_key_value
         }
         console.log("primaryKey", primaryKey);
+
+        // add audit field for updated_at (or user provided) timestamp if configured
+        if (event.audit_field_ut && event.audit_field_ut != "") {
+            if (event.audit_ts_format === "ISO-8601") {
+                itemToUpdate[event.audit_field_ut] = new Date().toISOString();
+            } else {
+                itemToUpdate[event.audit_field_ut] = Date.now();
+            }
+        }
 
         // prepare update expression using all key/value placeholders
         var updateExpr = "set ";
@@ -156,10 +165,10 @@ export const handler = async (event) => {
         console.log("params: ", params);
 
         // Put item in DynamoDB
-        await dynamoDb.send(new UpdateCommand(params));
-
+        const data = await dynamoDb.send(new UpdateCommand(params));
+        const updatedItem = data.Attributes; 
         // success response
-        return successCallback(entity_name, itemToUpdate);
+        return successCallback(entity_name, updatedItem);
 
     } catch (error) {
         console.error("Error adding item:", error.name);

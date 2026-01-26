@@ -78,6 +78,8 @@ resource "aws_api_gateway_integration" "table_put_int" {
     "partition_key_type": "${local.tables_need_put[each.key].partition_key.type}",
     "sort_key": "${lower(local.tables_need_put[each.key].sort_key.name)}",
     "sort_key_type": "${local.tables_need_put[each.key].sort_key.type}",
+    "audit_field_ut": "${local.audit_field_for_updated_at}",
+    "audit_ts_format": "${local.audit_field_timestamp_format}",
     "body": $input.body
 }
 EOF

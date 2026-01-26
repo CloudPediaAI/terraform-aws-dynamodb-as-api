@@ -66,6 +66,17 @@ data "aws_dynamodb_table" "all_indexes" {
 }
 
 locals {
+
+  audit_field_for_created_at = (var.auto_audit_fields_update) ? (
+    (trimspace(var.audit_field_for_created_at) != "") ? var.audit_field_for_created_at : "created_at"
+  ) : ""
+
+  audit_field_for_updated_at = (var.auto_audit_fields_update) ? (
+    (trimspace(var.audit_field_for_updated_at) != "") ? var.audit_field_for_updated_at : "updated_at"
+  ) : ""
+
+  audit_field_timestamp_format = (trimspace(var.audit_field_timestamp_format) != "") ? var.audit_field_timestamp_format : "ISO-8601"
+
   // preparing schema of all tables
   tables = flatten([
     for key, value in data.aws_dynamodb_table.all_tables : [

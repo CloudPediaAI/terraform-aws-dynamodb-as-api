@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.3.4] - 2026-01-25
+
+### ✨ Added
+- **Audit Field Automation**: Automatic management of audit fields for tracking item creation and modification
+  - Added `auto_audit_fields_update` variable to enable/disable audit field automation (default: false)
+  - Added `audit_field_for_created_at` variable to customize the created timestamp field name (default: "created_at")
+  - Added `audit_field_for_updated_at` variable to customize the updated timestamp field name (default: "updated_at")
+  - Added `audit_field_timestamp_format` variable to choose timestamp format (options: "ISO-8601" or "UNIX-EPOCH", default: "ISO-8601")
+  - **Automatic Timestamp Generation**:
+    - POST operations automatically add `created_at` timestamps to new items
+    - PUT operations automatically add/update `updated_at` timestamps on existing items
+    - Support for both ISO-8601 string format (`2026-01-25T10:30:00.000Z`) and Unix epoch numeric format (`1737804600000`)
+
+### 🔧 Changed
+- **Enhanced Lambda Function Parameters**: Updated POST and PUT Lambda functions to accept audit field configuration parameters
+  - POST Lambda now accepts `audit_field_ct` (created at) and `audit_ts_format` parameters
+  - PUT Lambda now accepts `audit_field_ut` (updated at) and `audit_ts_format` parameters
+  - API Gateway request templates updated to pass audit configuration to Lambda functions
+
+### 🔄 Migration Notes
+- No breaking changes to API request/response formats
+- All new variables are optional
+- Existing successful API calls remain unchanged
+
+---
+
 ## [v1.3.3] - 2026-01-23
 
 ### ✨ Added
