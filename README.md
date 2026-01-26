@@ -20,9 +20,9 @@ This terraform module will create a REST API with full CRUD operations (Create, 
 
 
 # Release Notes
-## v1.3.3
+## v1.3.4
 ### Changes/Updates
-Enhanced CORS support and API Gateway standardization with comprehensive Cross-Origin Resource Sharing configuration. For detailed changes, see [CHANGELOG.md](CHANGELOG.md#v133).
+Audit field timestamp automation implemented. For detailed changes, see [CHANGELOG.md](CHANGELOG.md#v134).
 
 ### Key Features Added
 - **Enhanced CORS Support**: Comprehensive Cross-Origin Resource Sharing configuration with configurable origins
