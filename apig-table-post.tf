@@ -91,26 +91,7 @@ EOF
   }
 }
 
-resource "aws_api_gateway_integration_response" "table_post_int_response_200" {
-  for_each = aws_api_gateway_integration.table_post_int
-
-  depends_on = [aws_api_gateway_integration.table_post_int]
-
-  resource_id = each.value.resource_id
-  rest_api_id = each.value.rest_api_id
-  http_method = each.value.http_method
-
-  status_code = aws_api_gateway_method_response.table_post_method_response_200[each.key].status_code
-
-  response_parameters = local.res_param_responses_post
-  response_templates = {
-    "application/json" = <<EOF
-#set($inputRoot = $input.path('$'))
-$inputRoot.body
-    EOF
-  }
-}
-
+# Integration Responses - Order matters: most specific patterns first
 resource "aws_api_gateway_integration_response" "table_post_int_response_400" {
   for_each = aws_api_gateway_integration.table_post_int
 
@@ -121,7 +102,7 @@ resource "aws_api_gateway_integration_response" "table_post_int_response_400" {
   http_method = each.value.http_method
 
   status_code       = aws_api_gateway_method_response.table_post_method_response_400[each.key].status_code
-  selection_pattern = ".*ERROR_400.*"
+  selection_pattern = "\\{.*\"statusCode\":400.*\\}"
 
   response_parameters = local.res_param_responses_post
 
@@ -129,7 +110,11 @@ resource "aws_api_gateway_integration_response" "table_post_int_response_400" {
   response_templates = {
     "application/json" = <<EOF
 #set($inputRoot = $input.path('$'))
-$inputRoot.errorMessage    
+#if($inputRoot.body)
+$inputRoot.body
+#else
+$input.path('$')
+#end    
 EOF
   }
 }
@@ -144,7 +129,7 @@ resource "aws_api_gateway_integration_response" "table_post_int_response_404" {
   http_method = each.value.http_method
 
   status_code       = aws_api_gateway_method_response.table_post_method_response_404[each.key].status_code
-  selection_pattern = ".*ERROR_404.*"
+  selection_pattern = "\\{.*\"statusCode\":404.*\\}"
 
   response_parameters = local.res_param_responses_post
 
@@ -152,7 +137,11 @@ resource "aws_api_gateway_integration_response" "table_post_int_response_404" {
   response_templates = {
     "application/json" = <<EOF
 #set($inputRoot = $input.path('$'))
-$inputRoot.errorMessage    
+#if($inputRoot.body)
+$inputRoot.body
+#else
+$input.path('$')
+#end    
 EOF
   }
 }
@@ -167,7 +156,7 @@ resource "aws_api_gateway_integration_response" "table_post_int_response_500" {
   http_method = each.value.http_method
 
   status_code       = aws_api_gateway_method_response.table_post_method_response_500[each.key].status_code
-  selection_pattern = ".*ERROR_500.*"
+  selection_pattern = "\\{.*\"statusCode\":5[0-9][0-9].*\\}"
 
   response_parameters = local.res_param_responses_post
 
@@ -175,7 +164,33 @@ resource "aws_api_gateway_integration_response" "table_post_int_response_500" {
   response_templates = {
     "application/json" = <<EOF
 #set($inputRoot = $input.path('$'))
-$inputRoot.errorMessage    
+#if($inputRoot.body)
+$inputRoot.body
+#else
+$input.path('$')
+#end    
 EOF
+  }
+}
+
+# Default success response - must be last
+resource "aws_api_gateway_integration_response" "table_post_int_response_200" {
+  for_each = aws_api_gateway_integration.table_post_int
+
+  depends_on = [aws_api_gateway_integration.table_post_int]
+
+  resource_id = each.value.resource_id
+  rest_api_id = each.value.rest_api_id
+  http_method = each.value.http_method
+
+  status_code = aws_api_gateway_method_response.table_post_method_response_200[each.key].status_code
+  selection_pattern = ""  # Default response - catches anything not matched by other patterns
+
+  response_parameters = local.res_param_responses_post
+  response_templates = {
+    "application/json" = <<EOF
+#set($inputRoot = $input.path('$'))
+$inputRoot.body
+    EOF
   }
 }

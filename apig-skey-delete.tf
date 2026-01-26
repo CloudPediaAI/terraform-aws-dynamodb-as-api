@@ -114,13 +114,13 @@ resource "aws_api_gateway_integration_response" "skey_delete_int_response_400" {
   http_method = each.value.http_method
 
   status_code       = aws_api_gateway_method_response.skey_delete_method_response_400[each.key].status_code
-  selection_pattern = ".*ERROR_400.*"
+  selection_pattern = "4\\d{2}"
 
   response_parameters = local.res_param_responses_delete
   response_templates = {
     "application/json" = <<EOF
 #set($inputRoot = $input.path('$'))
-$inputRoot.errorMessage
+$inputRoot.body
     EOF
   }
 }
@@ -135,13 +135,13 @@ resource "aws_api_gateway_integration_response" "skey_delete_int_response_404" {
   http_method = each.value.http_method
 
   status_code       = aws_api_gateway_method_response.skey_delete_method_response_404[each.key].status_code
-  selection_pattern = ".*ERROR_404.*"
+  selection_pattern = "404"
 
   response_parameters = local.res_param_responses_delete
   response_templates = {
     "application/json" = <<EOF
 #set($inputRoot = $input.path('$'))
-$inputRoot.errorMessage
+$inputRoot.body
     EOF
   }
 }
@@ -156,13 +156,13 @@ resource "aws_api_gateway_integration_response" "skey_delete_int_response_500" {
   http_method = each.value.http_method
 
   status_code       = aws_api_gateway_method_response.skey_delete_method_response_500[each.key].status_code
-  selection_pattern = ".*ERROR_500.*"
+  selection_pattern = "5\\d{2}"
 
   response_parameters = local.res_param_responses_delete
   response_templates = {
     "application/json" = <<EOF
 #set($inputRoot = $input.path('$'))
-$inputRoot.errorMessage
+$inputRoot.body
     EOF
   }
 }

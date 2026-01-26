@@ -38,7 +38,7 @@ data "aws_iam_policy_document" "dynamodb_access_policy" {
   for_each = local.tables_need_endpoint
 
   statement {
-    sid = "Stm${replace(each.key, "-", "_")}"
+    sid = "Stm${replace(replace(each.key, "-", ""), "_", "")}"
     actions   = concat(
       ((each.value.need_get)?local.policy_actions_for_get:[]),
       ((each.value.need_post)?local.policy_actions_for_post:[]),
