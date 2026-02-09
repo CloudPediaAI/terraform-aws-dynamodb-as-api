@@ -1,3 +1,8 @@
+output "api" {
+  value       = aws_api_gateway_rest_api.main
+  description = "API resource created by this module"
+}
+
 output "api_arn" {
   value       = aws_api_gateway_rest_api.main.arn
   description = "ARN of API created by this module"
@@ -15,5 +20,5 @@ output "api_endpoints" {
 
 output "api_url" {
   value       = local.api_base_url
-  description = "Base URL of the API Created by this module"
+  description = "Base URL of the API created by this module"
 }
