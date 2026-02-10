@@ -35,7 +35,6 @@ locals {
     COGNITO = "COGNITO_USER_POOLS"
   }
 
-  # NONE,AWS_IAM,CUSTOM,COGNITO_USER_POOLS,AWS_CROSS_ACCOUNT_IAM,JWT
   method_auth_types = {
     NONE            = "NONE",
     AWSIAM          = "AWS_IAM",
@@ -260,7 +259,7 @@ locals {
 
   create_iam_role        = (var.iam_role_arn == null)
   auth_type              = (var.authorizer_type == "COGNITO") ? local.auth_types.COGNITO : var.authorizer_type
-  method_auth_type       = (local.auth_type == local.auth_types.TOKEN || local.auth_type == local.auth_types.REQUEST) ? local.method_auth_types.CUSTOM : local.method_auth_types.NONE
+  method_auth_type       = (local.auth_type == local.auth_types.TOKEN || local.auth_type == local.auth_types.REQUEST) ? local.method_auth_types.CUSTOM : local.auth_type
   authorizer_id          = (local.auth_type == local.auth_types.COGNITO) ? aws_api_gateway_authorizer.cognito[0].id : ((local.auth_type == local.auth_types.TOKEN || local.auth_type == local.auth_types.REQUEST) ? aws_api_gateway_authorizer.lambda[0].id : null)
   need_lambda_authorizer = (local.auth_type == local.auth_types.TOKEN || local.auth_type == local.auth_types.REQUEST)
 
