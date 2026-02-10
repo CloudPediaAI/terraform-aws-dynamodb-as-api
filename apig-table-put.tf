@@ -1,8 +1,8 @@
 resource "aws_api_gateway_method" "table_put" {
   for_each = local.tables_need_put
 
-  authorization = local.auth_type
-  authorizer_id = (local.auth_type == local.auth_types.COGNITO) ? aws_api_gateway_authorizer.cognito[0].id : null
+  authorization = local.method_auth_type
+  authorizer_id = local.authorizer_id
 
   http_method = local.http_methods.PUT
   resource_id = aws_api_gateway_resource.table[each.key].id

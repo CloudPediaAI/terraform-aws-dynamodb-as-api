@@ -10,8 +10,8 @@ resource "aws_api_gateway_resource" "table" {
 resource "aws_api_gateway_method" "table_get" {
   for_each = aws_api_gateway_resource.table
 
-  authorization = local.auth_type
-  authorizer_id = (local.auth_type == local.auth_types.COGNITO) ? aws_api_gateway_authorizer.cognito[0].id : null
+  authorization = local.method_auth_type
+  authorizer_id = local.authorizer_id
 
   http_method   = local.http_methods.GET
   resource_id   = each.value.id

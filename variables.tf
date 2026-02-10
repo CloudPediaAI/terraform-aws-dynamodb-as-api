@@ -70,10 +70,32 @@ variable "hosted_zone_id" {
   description = "Id of the Hosted Zone in Route 53.  This is not required if domain_name provided"
 }
 
+variable "authorizer_type" {
+  type        = string
+  default     = "NONE"
+  description = "Type of the authorizer. Allowed values are TOKEN for a Lambda function using a single authorization token submitted in a custom header, REQUEST for a Lambda function using incoming request parameters, or COGNITO for using an Amazon Cognito user pool. Defaults to NONE"
+  validation {
+    condition     = contains(["TOKEN", "REQUEST", "COGNITO", "NONE"], var.authorizer_type)
+    error_message = "authorizer_type must be one of 'TOKEN', 'REQUEST', 'COGNITO', or 'NONE'"
+  }
+}
+
 variable "cognito_user_pool_arns" {
   type        = set(string)
   default     = []
-  description = "List of the Amazon Cognito user pool ARNs to authenticate API endpoints"
+  description = "List of the Amazon Cognito user pool ARNs to authenticate API endpoints. This is required if authorizer_type is set to COGNITO"
+}
+
+variable "lambda_authorizer_arn" {
+  type        = string
+  default     = null
+  description = "ARN of Lambda Authorizer. This is required if authorizer_type is set to TOKEN or REQUEST."
+}
+
+variable "lambda_authorizer_uri" {
+  type        = string
+  default     = null
+  description = "Uniform Resource Identifier (URI) of Lambda Authorizer. This is required if authorizer_type is set to TOKEN or REQUEST. This must be a well-formed Lambda function URI in the form of arn:aws:apigateway:{region}:lambda:path/{service_api}"
 }
 
 variable "tags" {
@@ -109,8 +131,8 @@ variable "audit_field_for_updated_at" {
 }
 
 variable "audit_field_timestamp_format" {
-  type = string
-  default = "ISO-8601"
+  type        = string
+  default     = "ISO-8601"
   description = "Format for timestamp in audit fields (if auto_audit_fields_update is enabled). Options are 'ISO-8601' or 'UNIX-EPOCH'"
   validation {
     condition     = contains(["ISO-8601", "UNIX-EPOCH"], var.audit_field_timestamp_format)

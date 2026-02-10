@@ -13,10 +13,10 @@ data "aws_region" "default" {}
 
 locals {
   http_methods = {
-    GET    = "GET",
-    POST   = "POST",
-    PUT    = "PUT",
-    DELETE = "DELETE",
+    GET     = "GET",
+    POST    = "POST",
+    PUT     = "PUT",
+    DELETE  = "DELETE",
     OPTIONS = "OPTIONS"
   }
 
@@ -30,17 +30,27 @@ locals {
 
   auth_types = {
     NONE    = "NONE",
-    CUSTOM  = "CUSTOM",
-    AWSIAM  = "AWS_IAM",
+    TOKEN   = "TOKEN",
+    REQUEST = "REQUEST",
     COGNITO = "COGNITO_USER_POOLS"
   }
 
+  # NONE,AWS_IAM,CUSTOM,COGNITO_USER_POOLS,AWS_CROSS_ACCOUNT_IAM,JWT
+  method_auth_types = {
+    NONE            = "NONE",
+    AWSIAM          = "AWS_IAM",
+    CUSTOM          = "CUSTOM",
+    COGNITO         = "COGNITO_USER_POOLS",
+    CROSSACCOUNTIAM = "AWS_CROSS_ACCOUNT_IAM",
+    JWT             = "JWT"
+  }
+
   http_status = {
-    SUCCESS_200 = "200",
+    SUCCESS_200    = "200",
     CLIENT_ERR_400 = "400",
-    UNAUTH_401 = "401",
-    FORBIDDEN_403 = "403",
-    NOT_FOUND_404 = "404",
+    UNAUTH_401     = "401",
+    FORBIDDEN_403  = "403",
+    NOT_FOUND_404  = "404",
     SERVER_ERR_500 = "500"
   }
 
@@ -224,7 +234,7 @@ locals {
   }
 
   # Since all tables/indexes will have a partition-key
-  tables_need_pkey_get        = local.tables_need_get
+  tables_need_pkey_get = local.tables_need_get
   # tables_need_pkey_delete     = local.tables_need_delete
   tables_need_pkey_delete = {
     for key, table_info in local.tables_need_endpoint : key => table_info if(table_info != null && table_info.need_delete && !table_info.has_sort_key)
@@ -248,18 +258,21 @@ locals {
 
   get_integration_uri = "arn:aws:apigateway:${data.aws_region.default.region}:dynamodb:action/Query"
 
-  create_iam_role = (var.iam_role_arn == null)
-  auth_type       = (var.cognito_user_pool_arns != null && length(var.cognito_user_pool_arns) > 0) ? local.auth_types.COGNITO : local.auth_types.NONE
+  create_iam_role        = (var.iam_role_arn == null)
+  auth_type              = (var.authorizer_type == "COGNITO") ? local.auth_types.COGNITO : var.authorizer_type
+  method_auth_type       = (local.auth_type == local.auth_types.TOKEN || local.auth_type == local.auth_types.REQUEST) ? local.method_auth_types.CUSTOM : local.method_auth_types.NONE
+  authorizer_id          = (local.auth_type == local.auth_types.COGNITO) ? aws_api_gateway_authorizer.cognito[0].id : ((local.auth_type == local.auth_types.TOKEN || local.auth_type == local.auth_types.REQUEST) ? aws_api_gateway_authorizer.lambda[0].id : null)
+  need_lambda_authorizer = (local.auth_type == local.auth_types.TOKEN || local.auth_type == local.auth_types.REQUEST)
 
   hosted_zone_provided = (var.hosted_zone_id != null)
   domain_provided      = (var.domain_name != "null")
   create_custom_domain = (local.hosted_zone_provided || local.domain_provided)
 
-  domain_name     = (local.create_custom_domain) ? ((local.domain_provided) ? lower(var.domain_name) : data.aws_route53_zone.by_id[0].name) : null
+  domain_name        = (local.create_custom_domain) ? ((local.domain_provided) ? lower(var.domain_name) : data.aws_route53_zone.by_id[0].name) : null
   api_subdomain_name = (var.api_subdomain_name != "") ? "${lower(var.api_subdomain_name)}" : "${lower(var.api_name)}"
-  api_domain_name = (local.create_custom_domain) ? "${local.api_subdomain_name}.${local.domain_name}" : null
-  custom_api_url  = (local.create_custom_domain) ? "https://${local.api_subdomain_name}.${local.domain_name}/${var.api_version}" : null
-  api_base_url    = (local.create_custom_domain) ? local.custom_api_url : aws_api_gateway_stage.prod.invoke_url
+  api_domain_name    = (local.create_custom_domain) ? "${local.api_subdomain_name}.${local.domain_name}" : null
+  custom_api_url     = (local.create_custom_domain) ? "https://${local.api_subdomain_name}.${local.domain_name}/${var.api_version}" : null
+  api_base_url       = (local.create_custom_domain) ? local.custom_api_url : aws_api_gateway_stage.prod.invoke_url
 
   api_endpoints_pkey = flatten([
     for key, value in local.tables_need_pkey_get : {
@@ -305,16 +318,16 @@ locals {
     }
     ]
   )
-  
+
   api_endpoints = concat(local.api_endpoints_pkey, local.api_endpoints_skey, local.api_endpoints_post, local.api_endpoints_put, local.api_endpoints_delete)
 
-  allow_headers = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-  allow_all_methods = "'OPTIONS,GET,POST,PUT,DELETE'"
-  allow_get_methods = "'OPTIONS,GET'"
-  allow_post_methods = "'OPTIONS,POST'"
-  allow_put_methods = "'OPTIONS,PUT'"
-  allow_delete = "'OPTIONS,DELETE'"
-  allow_get_delete_methods = "'OPTIONS,GET,DELETE'"
+  allow_headers                 = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  allow_all_methods             = "'OPTIONS,GET,POST,PUT,DELETE'"
+  allow_get_methods             = "'OPTIONS,GET'"
+  allow_post_methods            = "'OPTIONS,POST'"
+  allow_put_methods             = "'OPTIONS,PUT'"
+  allow_delete                  = "'OPTIONS,DELETE'"
+  allow_get_delete_methods      = "'OPTIONS,GET,DELETE'"
   allow_post_put_delete_methods = "'OPTIONS,GET,POST,PUT'"
 
   res_params_common = {
