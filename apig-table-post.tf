@@ -17,7 +17,7 @@ resource "aws_api_gateway_method_response" "table_post_method_response_200" {
   rest_api_id = each.value.rest_api_id
   http_method = each.value.http_method
 
-  status_code = local.http_status.SUCCESS_200
+  status_code         = local.http_status.SUCCESS_200
   response_parameters = local.res_params_common
 }
 
@@ -59,7 +59,7 @@ resource "aws_api_gateway_method_response" "table_post_method_response_500" {
   rest_api_id = each.value.rest_api_id
   http_method = each.value.http_method
 
-  status_code = local.http_status.SERVER_ERR_500
+  status_code         = local.http_status.SERVER_ERR_500
   response_parameters = local.res_params_common
 }
 
@@ -83,8 +83,10 @@ resource "aws_api_gateway_integration" "table_post_int" {
     "table_name": "${local.tables_need_post[each.key].table_name}",
     "partition_key": "${lower(local.tables_need_post[each.key].partition_key.name)}",
     "partition_key_type": "${local.tables_need_post[each.key].partition_key.type}",
+%{if try(local.tables_need_post[each.key].sort_key, null) != null~}
     "sort_key": "${lower(local.tables_need_post[each.key].sort_key.name)}",
     "sort_key_type": "${local.tables_need_post[each.key].sort_key.type}",
+%{endif~}
     "audit_field_ct": "${local.audit_field_for_created_at}",
     "audit_ts_format": "${local.audit_field_timestamp_format}",  
     "body": $input.body
