@@ -36,6 +36,21 @@ resource "aws_api_gateway_method_response" "table_post_method_response_400" {
   response_parameters = local.res_params_common
 }
 
+# Method Response for POST - Unauthorized Error 401
+resource "aws_api_gateway_method_response" "table_post_method_response_401" {
+  for_each = aws_api_gateway_method.table_post
+
+  resource_id = each.value.resource_id
+  rest_api_id = each.value.rest_api_id
+  http_method = each.value.http_method
+
+  status_code = local.http_status.UNAUTH_401
+  response_models = {
+    "application/json" = "Error"
+  }
+  response_parameters = local.res_params_common
+}
+
 # Method Response for POST - Not Found Error 404
 resource "aws_api_gateway_method_response" "table_post_method_response_404" {
   for_each = aws_api_gateway_method.table_post
@@ -126,6 +141,29 @@ resource "aws_api_gateway_integration_response" "table_post_int_response_400" {
 
   status_code       = aws_api_gateway_method_response.table_post_method_response_400[each.key].status_code
   selection_pattern = ".*ERROR_400.*"
+
+  response_parameters = local.res_param_responses_post
+
+  # Optional: Transform the output using a mapping template
+  response_templates = {
+    "application/json" = <<EOF
+#set($inputRoot = $input.path('$'))
+$inputRoot.errorMessage    
+EOF
+  }
+}
+
+resource "aws_api_gateway_integration_response" "table_post_int_response_401" {
+  for_each = aws_api_gateway_integration.table_post_int
+
+  depends_on = [aws_api_gateway_integration.table_post_int]
+
+  resource_id = each.value.resource_id
+  rest_api_id = each.value.rest_api_id
+  http_method = each.value.http_method
+
+  status_code       = aws_api_gateway_method_response.table_post_method_response_401[each.key].status_code
+  selection_pattern = ".*ERROR_401.*"
 
   response_parameters = local.res_param_responses_post
 
