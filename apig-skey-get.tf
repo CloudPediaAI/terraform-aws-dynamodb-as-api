@@ -20,7 +20,7 @@ resource "aws_api_gateway_method" "skey_get" {
 
 
 #Add a response code with the method
-resource "aws_api_gateway_method_response" "skey_get_method_response" {
+resource "aws_api_gateway_method_response" "skey_get_method_response_200" {
   for_each = aws_api_gateway_method.skey_get
 
   resource_id = each.value.resource_id
@@ -28,6 +28,48 @@ resource "aws_api_gateway_method_response" "skey_get_method_response" {
   http_method = each.value.http_method
 
   status_code = local.http_status.SUCCESS_200
+  response_parameters = local.res_params_common
+}
+
+# Method Response for GET - Input/Client Error 400
+resource "aws_api_gateway_method_response" "skey_get_method_response_400" {
+  for_each = aws_api_gateway_method.skey_get
+
+  resource_id = each.value.resource_id
+  rest_api_id = each.value.rest_api_id
+  http_method = each.value.http_method
+
+  status_code = local.http_status.CLIENT_ERR_400
+  response_models = {
+    "application/json" = "Error"
+  }
+  response_parameters = local.res_params_common
+}
+
+# Method Response for GET - Not Found Error 404
+resource "aws_api_gateway_method_response" "skey_get_method_response_404" {
+  for_each = aws_api_gateway_method.skey_get
+
+  resource_id = each.value.resource_id
+  rest_api_id = each.value.rest_api_id
+  http_method = each.value.http_method
+
+  status_code = local.http_status.NOT_FOUND_404
+  response_models = {
+    "application/json" = "Error"
+  }
+  response_parameters = local.res_params_common
+}
+
+# Method Response for GET - Server Error 500
+resource "aws_api_gateway_method_response" "skey_get_method_response_500" {
+  for_each = aws_api_gateway_method.skey_get
+
+  resource_id = each.value.resource_id
+  rest_api_id = each.value.rest_api_id
+  http_method = each.value.http_method
+
+  status_code         = local.http_status.SERVER_ERR_500
   response_parameters = local.res_params_common
 }
 
@@ -83,7 +125,7 @@ EOF
 }
 
 # Create a response template for dynamo db structure
-resource "aws_api_gateway_integration_response" "skey_get_int_response" {
+resource "aws_api_gateway_integration_response" "skey_get_int_response_200" {
   for_each = aws_api_gateway_integration.skey_get_int
 
   depends_on = [aws_api_gateway_integration.skey_get_int]
@@ -92,7 +134,7 @@ resource "aws_api_gateway_integration_response" "skey_get_int_response" {
   rest_api_id = each.value.rest_api_id
   http_method = each.value.http_method
 
-  status_code = aws_api_gateway_method_response.skey_get_method_response[each.key].status_code
+  status_code = aws_api_gateway_method_response.skey_get_method_response_200[each.key].status_code
   response_parameters = local.res_param_responses_get
   response_templates = {
     "application/json" = <<EOF
@@ -159,5 +201,74 @@ resource "aws_api_gateway_integration_response" "skey_get_int_response" {
 #end
 }
     EOF
+  }
+}
+
+resource "aws_api_gateway_integration_response" "skey_get_int_response_400" {
+  for_each = aws_api_gateway_integration.skey_get_int
+
+  depends_on = [aws_api_gateway_integration.skey_get_int]
+
+  resource_id = each.value.resource_id
+  rest_api_id = each.value.rest_api_id
+  http_method = each.value.http_method
+
+  status_code       = aws_api_gateway_method_response.skey_get_method_response_400[each.key].status_code
+  selection_pattern = ".*ERROR_400.*"
+
+  response_parameters = local.res_param_responses_get
+
+  # Optional: Transform the output using a mapping template
+  response_templates = {
+    "application/json" = <<EOF
+#set($inputRoot = $input.path('$'))
+$inputRoot.errorMessage    
+EOF
+  }
+}
+
+resource "aws_api_gateway_integration_response" "skey_get_int_response_404" {
+  for_each = aws_api_gateway_integration.skey_get_int
+
+  depends_on = [aws_api_gateway_integration.skey_get_int]
+
+  resource_id = each.value.resource_id
+  rest_api_id = each.value.rest_api_id
+  http_method = each.value.http_method
+
+  status_code       = aws_api_gateway_method_response.skey_get_method_response_404[each.key].status_code
+  selection_pattern = ".*ERROR_404.*"
+
+  response_parameters = local.res_param_responses_get
+
+  # Optional: Transform the output using a mapping template
+  response_templates = {
+    "application/json" = <<EOF
+#set($inputRoot = $input.path('$'))
+$inputRoot.errorMessage    
+EOF
+  }
+}
+
+resource "aws_api_gateway_integration_response" "skey_get_int_response_500" {
+  for_each = aws_api_gateway_integration.skey_get_int
+
+  depends_on = [aws_api_gateway_integration.skey_get_int]
+
+  resource_id = each.value.resource_id
+  rest_api_id = each.value.rest_api_id
+  http_method = each.value.http_method
+
+  status_code       = aws_api_gateway_method_response.skey_get_method_response_500[each.key].status_code
+  selection_pattern = ".*ERROR_500.*"
+
+  response_parameters = local.res_param_responses_get
+
+  # Optional: Transform the output using a mapping template
+  response_templates = {
+    "application/json" = <<EOF
+#set($inputRoot = $input.path('$'))
+$inputRoot.errorMessage    
+EOF
   }
 }
