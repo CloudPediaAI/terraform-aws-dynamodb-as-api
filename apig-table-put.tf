@@ -1,8 +1,9 @@
 resource "aws_api_gateway_method" "table_put" {
   for_each = local.tables_need_put
 
-  authorization = local.method_auth_type
-  authorizer_id = local.authorizer_id
+  authorization    = local.method_auth_type
+  authorizer_id    = local.authorizer_id
+  api_key_required = var.api_key_required
 
   http_method = local.http_methods.PUT
   resource_id = aws_api_gateway_resource.table[each.key].id

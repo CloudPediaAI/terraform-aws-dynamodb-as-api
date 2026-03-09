@@ -145,3 +145,9 @@ variable "cors_allowed_origins" {
   type        = string
   default     = "'*'"
 }
+
+variable "api_key_required" {
+  description = "Whether API key is required for accessing the API endpoints. If required, call endpoints with x-api-key header and a valid API key"
+  type        = bool
+  default     = false
+}  

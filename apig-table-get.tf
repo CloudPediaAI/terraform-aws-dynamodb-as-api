@@ -10,12 +10,13 @@ resource "aws_api_gateway_resource" "table" {
 resource "aws_api_gateway_method" "table_get" {
   for_each = aws_api_gateway_resource.table
 
-  authorization = local.method_auth_type
-  authorizer_id = local.authorizer_id
+  authorization    = local.method_auth_type
+  authorizer_id    = local.authorizer_id
+  api_key_required = var.api_key_required
 
-  http_method   = local.http_methods.GET
-  resource_id   = each.value.id
-  rest_api_id   = each.value.rest_api_id
+  http_method = local.http_methods.GET
+  resource_id = each.value.id
+  rest_api_id = each.value.rest_api_id
 }
 
 resource "aws_api_gateway_integration" "table_get_int" {

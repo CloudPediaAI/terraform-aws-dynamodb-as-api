@@ -10,14 +10,14 @@ resource "aws_api_gateway_method" "pkey_get" {
   # for_each = aws_api_gateway_resource.pkey
   for_each = local.tables_need_pkey_get
 
-  authorization = local.method_auth_type
-  authorizer_id = local.authorizer_id
+  authorization    = local.method_auth_type
+  authorizer_id    = local.authorizer_id
+  api_key_required = var.api_key_required
 
   http_method = local.http_methods.GET
   resource_id = aws_api_gateway_resource.pkey[each.key].id
   rest_api_id = aws_api_gateway_resource.pkey[each.key].rest_api_id
 }
-
 
 #Add a response code with the method
 resource "aws_api_gateway_method_response" "pkey_get_method_response_200" {
@@ -27,7 +27,7 @@ resource "aws_api_gateway_method_response" "pkey_get_method_response_200" {
   rest_api_id = each.value.rest_api_id
   http_method = each.value.http_method
 
-  status_code = local.http_status.SUCCESS_200
+  status_code         = local.http_status.SUCCESS_200
   response_parameters = local.res_params_common
 }
 
@@ -143,7 +143,7 @@ resource "aws_api_gateway_integration_response" "pkey_get_int_response_200" {
   rest_api_id = each.value.rest_api_id
   http_method = each.value.http_method
 
-  status_code = aws_api_gateway_method_response.pkey_get_method_response_200[each.key].status_code
+  status_code         = aws_api_gateway_method_response.pkey_get_method_response_200[each.key].status_code
   response_parameters = local.res_param_responses_get
   response_templates = {
     "application/json" = <<EOF
