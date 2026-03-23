@@ -97,7 +97,7 @@ resource "aws_api_gateway_integration" "pkey_get_int" {
 
   type                    = local.integration_types.AWS
   integration_http_method = local.http_methods.POST
-  uri                     = local.get_integration_uri
+  uri                     = (local.tables_need_get[each.key].get_action == "Query") ? local.get_integration_query_uri : local.get_integration_getitem_uri
   credentials             = local.role_to_access_tables
 
   request_templates = (local.tables_need_get[each.key].is_index) ? {
@@ -115,7 +115,7 @@ resource "aws_api_gateway_integration" "pkey_get_int" {
     } 
 }
 EOF
-    } : {
+    } : (local.tables_need_get[each.key].get_action == "Query") ? {
     "application/json" = <<EOF
 #set( $pKeyInput = $input.params('${lower(local.tables_need_get[each.key].partition_key.name)}') )
 { 
@@ -127,6 +127,16 @@ EOF
                 "${local.tables_need_get[each.key].partition_key.type}" : "$pKeyInput"
             }
     } 
+}
+EOF
+    } : {
+    "application/json" = <<EOF
+#set( $pKeyInput = $input.params('${lower(local.tables_need_get[each.key].partition_key.name)}') )
+{ 
+    "TableName": "${local.tables_need_get[each.key].table_name}",
+    "Key": {
+        "${local.tables_need_get[each.key].partition_key.name}": { "${local.tables_need_get[each.key].partition_key.type}" : "$pKeyInput" }
+    }
 }
 EOF
   }
@@ -145,7 +155,7 @@ resource "aws_api_gateway_integration_response" "pkey_get_int_response_200" {
 
   status_code         = aws_api_gateway_method_response.pkey_get_method_response_200[each.key].status_code
   response_parameters = local.res_param_responses_get
-  response_templates = {
+  response_templates = (local.tables_need_get[each.key].get_action == "Query") ? {
     "application/json" = <<EOF
 #set($inputRoot = $input.path('$'))
 {
@@ -206,6 +216,70 @@ resource "aws_api_gateway_integration_response" "pkey_get_int_response_200" {
     #end
 }#if($foreach.hasNext),#end
 #end
+]}
+#end
+}
+    EOF
+    } : {
+    "application/json" = <<EOF
+#set($inputRoot = $input.path('$'))
+{
+    "status" : "success",
+    #if($inputRoot=={})
+    "count": 0,
+    "message": "No records found",
+    "data": null
+    #else
+    "count": 1,
+    "data": { "${each.key}":  [
+    #set($elem = $inputRoot.Item)
+    #foreach($key in $elem.keySet())
+    #set($valTypes = $elem.get($key).keySet() )
+    #if( $valTypes=="[M]" )
+        #set( $nestElem = $elem.get($key).M )
+        ##"$key": "$nestElem",
+        "$key": {
+        #foreach($nKey in $nestElem.keySet())
+        #set( $nValTypes = $nestElem.get($nKey).keySet() )
+        #if($nValTypes=="[N]")"$nKey": $nestElem.get($nKey).N
+        #elseif($nValTypes=="[BOOL]")"$nKey": $nestElem.get($nKey).BOOL
+        #else
+        "$nKey": "$nestElem.get($nKey).S"
+        #end
+        #if($foreach.hasNext),#{else}}#end
+        #end#if($foreach.hasNext),#end  
+    #elseif( $valTypes=="[L]" )
+        #set( $nestElem = $elem.get($key).L )
+        "$key": [
+        #foreach($nItem in $nestElem)
+        #set( $nValTypes = $nItem.keySet() )
+        #if($nValTypes=="[N]")$nItem.N
+        #elseif($nValTypes=="[BOOL]")$nItem.BOOL
+        #else
+        "$nItem.S"
+        #end
+        #if($foreach.hasNext),#{else}]#end
+        #end#if($foreach.hasNext),#end          
+    #elseif( $valTypes=="[SS]" )
+        #set( $nestElem = $elem.get($key).SS )
+        "$key": [
+        #foreach($eachValue in $nestElem)
+        "$eachValue"#if($foreach.hasNext),#end
+        #end ]#if($foreach.hasNext),#end  
+    #elseif( $valTypes=="[NS]" )
+        #set( $nestElem = $elem.get($key).NS )
+        "$key": [
+        #foreach($eachValue in $nestElem)
+        $eachValue#if($foreach.hasNext),#end
+        #end ]#if($foreach.hasNext),#end  
+    #elseif( $valTypes=="[N]" )
+    "$key": $elem.get($key).N#if($foreach.hasNext),#end
+    #elseif( $valTypes=="[BOOL]" )
+    "$key": $elem.get($key).BOOL#if($foreach.hasNext),#end
+    #else
+    "$key": "$elem.get($key).S"#if($foreach.hasNext),#end
+    #end
+    #end
 ]}
 #end
 }

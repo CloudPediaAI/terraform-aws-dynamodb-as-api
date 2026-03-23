@@ -192,6 +192,7 @@ locals {
         partition_key = tolist(value.attribute)[index(value.attribute.*.name, value.hash_key)]
         has_sort_key  = (value.range_key != null)
         sort_key      = (value.range_key != null) ? tolist(value.attribute)[index(value.attribute.*.name, value.range_key)] : null
+        get_action    = (value.is_index || value.range_key != null) ? "Query" : "GetItem"
 
         need_post   = value.need_post
         need_get    = value.need_get
@@ -255,7 +256,8 @@ locals {
     for key, table_info in local.tables_need_endpoint : key => table_info if(table_info != null && table_info.has_sort_key && (table_info.need_get || table_info.need_delete))
   }
 
-  get_integration_uri = "arn:aws:apigateway:${data.aws_region.default.region}:dynamodb:action/Query"
+  get_integration_query_uri   = "arn:aws:apigateway:${data.aws_region.default.region}:dynamodb:action/Query"
+  get_integration_getitem_uri = "arn:aws:apigateway:${data.aws_region.default.region}:dynamodb:action/GetItem"
 
   create_iam_role        = (var.iam_role_arn == null)
   auth_type              = (var.authorizer_type == "COGNITO") ? local.auth_types.COGNITO : var.authorizer_type

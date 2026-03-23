@@ -98,7 +98,7 @@ resource "aws_api_gateway_integration" "skey_get_int" {
 
   type                    = local.integration_types.AWS
   integration_http_method = local.http_methods.POST
-  uri                     = local.get_integration_uri
+  uri                     = local.get_integration_query_uri
   credentials             = local.role_to_access_tables
 
   request_templates = (local.tables_need_get[each.key].is_index) ? {
