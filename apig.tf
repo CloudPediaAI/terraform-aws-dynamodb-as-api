@@ -20,6 +20,6 @@ resource "aws_api_gateway_base_path_mapping" "prod" {
 
   api_id      = aws_api_gateway_rest_api.main.id
   stage_name  = aws_api_gateway_stage.prod.stage_name
-  domain_name = aws_api_gateway_domain_name.api[0].domain_name
+  domain_name = local.is_ssl_regional ? aws_api_gateway_domain_name.api_regional[0].domain_name : aws_api_gateway_domain_name.api[0].domain_name
   base_path   = var.api_version
 }
