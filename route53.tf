@@ -16,12 +16,12 @@ locals {
 }
 
 resource "aws_api_gateway_domain_name" "api" {
-  count   = (local.create_custom_domain && !local.is_ssl_regional) ? 1 : 0
+  count = (local.create_custom_domain && !local.is_ssl_regional) ? 1 : 0
 
   domain_name = local.api_domain_name
 
   # EDGE uses a CloudFront distribution and requires an ACM cert in us-east-1.
-  certificate_arn         = aws_acm_certificate_validation.ssl[0].certificate_arn
+  certificate_arn = aws_acm_certificate_validation.ssl[0].certificate_arn
 
   endpoint_configuration {
     types = [var.api_endpoint_type]
@@ -29,7 +29,7 @@ resource "aws_api_gateway_domain_name" "api" {
 }
 
 resource "aws_api_gateway_domain_name" "api_regional" {
-  count   = (local.create_custom_domain && local.is_ssl_regional) ? 1 : 0
+  count = (local.create_custom_domain && local.is_ssl_regional) ? 1 : 0
 
   domain_name = local.api_domain_name
 
@@ -43,7 +43,7 @@ resource "aws_api_gateway_domain_name" "api_regional" {
 
 # creating A records in Route 53 to route traffic to the API
 resource "aws_route53_record" "a_record_root" {
-  count   = (local.create_custom_domain && !local.is_ssl_regional) ? 1 : 0
+  count = (local.create_custom_domain && !local.is_ssl_regional) ? 1 : 0
 
   zone_id = local.hosted_zone
   name    = local.api_domain_name
@@ -57,7 +57,7 @@ resource "aws_route53_record" "a_record_root" {
 }
 
 resource "aws_route53_record" "a_record_root_regional" {
-  count   = (local.create_custom_domain && local.is_ssl_regional) ? 1 : 0
+  count = (local.create_custom_domain && local.is_ssl_regional) ? 1 : 0
 
   zone_id = local.hosted_zone
   name    = local.api_domain_name
@@ -68,4 +68,14 @@ resource "aws_route53_record" "a_record_root_regional" {
     zone_id                = aws_api_gateway_domain_name.api_regional[0].regional_zone_id
     evaluate_target_health = false
   }
+
+  dynamic "latency_routing_policy" {
+    for_each = local.latency_routing_policies
+    content {
+      region = data.aws_region.default.region
+    }
+  }
+
+  # Unique identifier required when using routing policies
+  set_identifier = var.routing_policy != "NONE" ? "${data.aws_region.default.region}-api" : null
 }

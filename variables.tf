@@ -99,6 +99,16 @@ variable "authorizer_type" {
   }
 }
 
+variable "routing_policy" {
+  type        = string
+  default     = "NONE"
+  description = "Type of the routing policy when configure custom domain in Route 53 (This is applicable for REGIONAL endpoints only) . Allowed values are WEIGHTED, LATENCY, FAILOVER or NONE. Defaults to NONE"
+  validation {
+    condition     = contains(["WEIGHTED", "LATENCY", "FAILOVER", "NONE"], var.routing_policy)
+    error_message = "routing_policy must be one of 'WEIGHTED', 'LATENCY', 'FAILOVER', or 'NONE'"
+  }  
+}
+
 variable "cognito_user_pool_arns" {
   type        = set(string)
   default     = []

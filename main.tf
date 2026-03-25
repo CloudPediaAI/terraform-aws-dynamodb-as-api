@@ -277,6 +277,8 @@ locals {
   custom_api_url     = (local.create_custom_domain) ? "https://${local.api_subdomain_name}.${local.domain_name}/${var.api_version}" : null
   api_base_url       = (local.create_custom_domain) ? local.custom_api_url : aws_api_gateway_stage.prod.invoke_url
 
+  latency_routing_policies = (var.routing_policy == "LATENCY") ? ["LATENCY"] : []
+
   api_endpoints_pkey = flatten([
     for key, value in local.tables_need_pkey_get : {
       "${key}" = {
