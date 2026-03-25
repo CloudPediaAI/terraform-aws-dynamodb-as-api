@@ -11,6 +11,37 @@ This terraform module will create a REST API with full CRUD operations (Create, 
 - **Custom Domain Support**: Optional custom domain configuration
 - **Cognito Authorization**: Built-in support for Cognito user pools
 
+## Providers (Regional vs Edge-Optimized)
+
+This module supports API Gateway endpoint types via `api_endpoint_type` (`EDGE`, `REGIONAL`, `PRIVATE`).
+
+If you use a custom domain with `api_endpoint_type = "EDGE"` (edge-optimized API Gateway), the ACM certificate must be created in `us-east-1`.
+For that case, this module uses an aliased AWS provider configuration named `us-east-1`.
+
+In your root module, configure both providers and pass them into this module:
+
+```hcl
+provider "aws" {
+  region = "us-west-2" # your main region (default)
+}
+
+provider "aws" {
+  alias  = "us-east-1"
+  region = "us-east-1" # required for edge-optimized custom domain ACM
+}
+
+module "dynamodb_as_api" {
+  source = "cloudpediaai/dynamodb-as-api/aws"
+
+  providers = {
+    aws           = aws
+    aws.us-east-1 = aws.us-east-1
+  }
+
+  api_endpoint_type = "REGIONAL" # EDGE | REGIONAL | PRIVATE
+}
+```
+
 
 # Links
 

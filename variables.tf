@@ -7,7 +7,6 @@ variable "dynamodb_tables" {
   description = "List of DynamoDB Tables and Index (Table details as as Map(Object('Entity Name'={table_name='Table Name', allowed_operations='CRUD'}))"
 }
 
-
 variable "api_name" {
   type        = string
   default     = "DynamoDB-as-API"
@@ -27,6 +26,26 @@ variable "api_version" {
   type        = string
   default     = "v1"
   description = "Give a version number prefixed with v. This will be used as part of base-path for API URL. Default is v1"
+}
+
+variable "api_endpoint_type" {
+  type        = string
+  default     = "EDGE"
+  description = "Type of the API endpoint. Allowed values are REGIONAL for a regional endpoint, EDGE for an edge-optimized endpoint, or PRIVATE for a private endpoint. Defaults to EDGE if not specified"
+  validation {
+    condition     = contains(["REGIONAL", "EDGE", "PRIVATE"], var.api_endpoint_type)
+    error_message = "api_endpoint_type must be one of 'REGIONAL', 'EDGE', or 'PRIVATE'"
+  }
+}
+
+variable "vpc_endpoint_ids" {
+  type        = list(string)
+  default     = []
+  description = "List of VPC Endpoint IDs for API Gateway. This is required if api_endpoint_type is set to PRIVATE"
+  validation {
+    condition     = var.api_endpoint_type != "PRIVATE" || length(var.vpc_endpoint_ids) > 0
+    error_message = "vpc_endpoint_ids must be provided when api_endpoint_type is set to 'PRIVATE'."
+  }
 }
 
 variable "iam_role_arn" {

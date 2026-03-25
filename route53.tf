@@ -18,8 +18,16 @@ locals {
 resource "aws_api_gateway_domain_name" "api" {
   count   = (local.create_custom_domain) ? 1 : 0
 
-  certificate_arn = aws_acm_certificate_validation.ssl[0].certificate_arn
-  domain_name     = local.api_domain_name
+  domain_name = local.api_domain_name
+
+  # EDGE uses a CloudFront distribution and requires an ACM cert in us-east-1.
+  # REGIONAL uses a regional endpoint and requires a cert in the API region.
+  certificate_arn         = local.is_ssl_regional ? null : aws_acm_certificate_validation.ssl[0].certificate_arn
+  regional_certificate_arn = local.is_ssl_regional ? aws_acm_certificate_validation.ssl_regional[0].certificate_arn : null
+
+  endpoint_configuration {
+    types = [var.api_endpoint_type]
+  }
 }
 
 # creating A records in Route 53 to route traffic to the API
@@ -31,8 +39,8 @@ resource "aws_route53_record" "a_record_root" {
   type    = "A"
 
   alias {
-    name                   = aws_api_gateway_domain_name.api[0].cloudfront_domain_name
-    zone_id                = aws_api_gateway_domain_name.api[0].cloudfront_zone_id
+    name                   = local.is_ssl_regional ? aws_api_gateway_domain_name.api[0].regional_domain_name : aws_api_gateway_domain_name.api[0].cloudfront_domain_name
+    zone_id                = local.is_ssl_regional ? aws_api_gateway_domain_name.api[0].regional_zone_id : aws_api_gateway_domain_name.api[0].cloudfront_zone_id
     evaluate_target_health = false
   }
 }

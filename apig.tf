@@ -1,5 +1,11 @@
 resource "aws_api_gateway_rest_api" "main" {
   name = var.api_name
+  
+  endpoint_configuration {
+    types = [ var.api_endpoint_type ]
+    vpc_endpoint_ids = (var.api_endpoint_type == "PRIVATE") ? var.vpc_endpoint_ids : null
+  }
+  
   tags = var.tags
 }
 

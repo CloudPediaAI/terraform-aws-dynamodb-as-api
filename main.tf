@@ -265,6 +265,8 @@ locals {
   authorizer_id          = (local.auth_type == local.auth_types.COGNITO) ? aws_api_gateway_authorizer.cognito[0].id : ((local.auth_type == local.auth_types.TOKEN || local.auth_type == local.auth_types.REQUEST) ? aws_api_gateway_authorizer.lambda[0].id : null)
   need_lambda_authorizer = (local.auth_type == local.auth_types.TOKEN || local.auth_type == local.auth_types.REQUEST)
 
+  is_ssl_regional = (var.api_endpoint_type == "EDGE") ? false : true
+
   hosted_zone_provided = (var.hosted_zone_id != null)
   domain_provided      = (var.domain_name != "null")
   create_custom_domain = (local.hosted_zone_provided || local.domain_provided)

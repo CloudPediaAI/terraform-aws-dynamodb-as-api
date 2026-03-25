@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.5.0] - 2026-03-24
+
+### ✨ Added
+- **API Gateway Endpoint Type Support**: Configure REST API endpoint type via `api_endpoint_type` (`EDGE`, `REGIONAL`, `PRIVATE`).
+- **Private API Support Inputs**: Added `vpc_endpoint_ids` for `api_endpoint_type = "PRIVATE"`.
+
+### 🔧 Changed
+- **Custom Domain + ACM Handling**: ACM resources are now split for EDGE vs REGIONAL endpoints.
+  - EDGE custom domains use an ACM cert in `us-east-1` via the `aws.us-east-1` provider alias.
+  - REGIONAL custom domains use an ACM cert in the API region (default `aws` provider).
+- **Provider Alias Naming**: Standardized the ACM provider alias name to `us-east-1` (valid Terraform identifier).
+
+### 📁 New Files Added
+- `acm-regional.tf` - ACM certificate + validation resources for REGIONAL endpoints.
+
+### 🔄 Migration Notes
+- If you previously used a custom domain with an EDGE endpoint, ensure you provide a `us-east-1` AWS provider alias (region `us-east-1`) and pass it via the module `providers` map.
+- Set `api_endpoint_type` to control endpoint type behavior (default remains `EDGE`).
+
+---
+
 ## [v1.3.5] - 2026-01-25
 
 ### ✨ Added

@@ -1,5 +1,5 @@
 resource "aws_acm_certificate" "ssl" {
-  count = (local.create_custom_domain) ? 1 : 0
+  count = (local.create_custom_domain && !local.is_ssl_regional) ? 1 : 0
 
   provider          = aws.us-east-1
   domain_name       = local.api_domain_name
@@ -14,7 +14,7 @@ resource "aws_acm_certificate" "ssl" {
 
 locals {
   # Encode then Decode Validation options to avoid conditional for_each
-  domain_validations_str = jsonencode((local.create_custom_domain) ? aws_acm_certificate.ssl[0].domain_validation_options : [
+  domain_validations_str = jsonencode((local.create_custom_domain && !local.is_ssl_regional) ? aws_acm_certificate.ssl[0].domain_validation_options : [
     {
       domain_name           = "dummy"
       resource_record_name  = "dummy"
@@ -48,7 +48,7 @@ locals {
 resource "aws_route53_record" "dvos" {
   depends_on = [ aws_acm_certificate.ssl ]
 
-  count = (local.create_custom_domain) ? 1 : 0
+  count = (local.create_custom_domain && !local.is_ssl_regional) ? 1 : 0
 
   zone_id         = local.hosted_zone
   ttl             = 60
@@ -61,7 +61,7 @@ resource "aws_route53_record" "dvos" {
 resource "aws_acm_certificate_validation" "ssl" {
   depends_on = [aws_route53_record.dvos]
 
-  count = (local.create_custom_domain) ? 1 : 0
+  count = (local.create_custom_domain && !local.is_ssl_regional) ? 1 : 0
 
   provider                = aws.us-east-1
   certificate_arn         = aws_acm_certificate.ssl[0].arn
