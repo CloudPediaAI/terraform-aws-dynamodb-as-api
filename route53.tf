@@ -12,7 +12,9 @@ data "aws_route53_zone" "by_name" {
 
 # extract Hosted Zone Id 
 locals {
-  hosted_zone = (local.create_custom_domain) ? ((local.hosted_zone_provided) ? data.aws_route53_zone.by_id[0].zone_id : data.aws_route53_zone.by_name[0].zone_id) : "null"
+  hosted_zone        = (local.create_custom_domain) ? ((local.hosted_zone_provided) ? data.aws_route53_zone.by_id[0].zone_id : data.aws_route53_zone.by_name[0].zone_id) : "null"
+  has_routing_policy = var.routing_policy != "NONE"
+  need_health_check  = var.create_health_check && local.has_routing_policy
 }
 
 resource "aws_api_gateway_domain_name" "api" {
@@ -52,8 +54,20 @@ resource "aws_route53_record" "a_record_root" {
   alias {
     name                   = aws_api_gateway_domain_name.api[0].cloudfront_domain_name
     zone_id                = aws_api_gateway_domain_name.api[0].cloudfront_zone_id
-    evaluate_target_health = false
+    evaluate_target_health = local.need_health_check
   }
+
+  health_check_id = local.need_health_check ? aws_route53_health_check.api_root[0].id : null
+
+  dynamic "latency_routing_policy" {
+    for_each = local.latency_routing_policies
+    content {
+      region = data.aws_region.default.region
+    }
+  }
+
+  # Unique identifier required when using routing policies
+  set_identifier = local.has_routing_policy ? "${data.aws_region.default.region}-api" : null
 }
 
 resource "aws_route53_record" "a_record_root_regional" {
@@ -66,8 +80,10 @@ resource "aws_route53_record" "a_record_root_regional" {
   alias {
     name                   = aws_api_gateway_domain_name.api_regional[0].regional_domain_name
     zone_id                = aws_api_gateway_domain_name.api_regional[0].regional_zone_id
-    evaluate_target_health = false
+    evaluate_target_health = local.need_health_check
   }
+
+  health_check_id = local.need_health_check ? aws_route53_health_check.api_root[0].id : null
 
   dynamic "latency_routing_policy" {
     for_each = local.latency_routing_policies
@@ -77,5 +93,5 @@ resource "aws_route53_record" "a_record_root_regional" {
   }
 
   # Unique identifier required when using routing policies
-  set_identifier = var.routing_policy != "NONE" ? "${data.aws_region.default.region}-api" : null
+  set_identifier = local.has_routing_policy ? "${data.aws_region.default.region}-api" : null
 }

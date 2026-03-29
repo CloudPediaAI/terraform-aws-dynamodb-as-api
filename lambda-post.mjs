@@ -10,7 +10,7 @@ import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
 import crypto from 'crypto';
 
 // Create DynamoDB client
-const client = new DynamoDBClient({ region: "us-west-2" });
+const client = new DynamoDBClient({ region: process.env.AWS_REGION });
 const dynamoDb = DynamoDBDocumentClient.from(client);
 var item_already_exists_msg = "Item already exists";
 

@@ -8,7 +8,7 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, DeleteCommand } from "@aws-sdk/lib-dynamodb";
 
-const client = new DynamoDBClient({ region: "us-west-2" });
+const client = new DynamoDBClient({ region: process.env.AWS_REGION });
 const dynamoDb = DynamoDBDocumentClient.from(client);
 
 var item_not_found_msg = "No item found to delete with the provided keys";

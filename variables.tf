@@ -180,3 +180,9 @@ variable "api_key_required" {
   type        = bool
   default     = false
 }  
+
+variable "create_health_check" {
+  description = "Whether to create a Route 53 health check for the API Gateway endpoint"
+  type        = bool
+  default     = false
+}
