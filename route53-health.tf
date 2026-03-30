@@ -19,7 +19,7 @@ resource "aws_route53_health_check" "api_root" {
   # resource_path     = (local.create_custom_domain) ? "/${var.api_version}" : "/${aws_api_gateway_stage.prod.stage_name}"
   resource_path     = "/${aws_api_gateway_stage.prod.stage_name}"
   failure_threshold = 3
-  request_interval  = 30
+  request_interval  = var.health_check_interval
 
   tags = merge(var.tags, {
     Name = local.route53_health_check_name

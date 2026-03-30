@@ -106,7 +106,7 @@ variable "routing_policy" {
   validation {
     condition     = contains(["WEIGHTED", "LATENCY", "FAILOVER", "NONE"], var.routing_policy)
     error_message = "routing_policy must be one of 'WEIGHTED', 'LATENCY', 'FAILOVER', or 'NONE'"
-  }  
+  }
 }
 
 variable "cognito_user_pool_arns" {
@@ -115,16 +115,22 @@ variable "cognito_user_pool_arns" {
   description = "List of the Amazon Cognito user pool ARNs to authenticate API endpoints. This is required if authorizer_type is set to COGNITO"
 }
 
-variable "lambda_authorizer_arn" {
-  type        = string
-  default     = null
-  description = "ARN of Lambda Authorizer. This is required if authorizer_type is set to TOKEN or REQUEST."
-}
+# variable "lambda_authorizer_arn" {
+#   type        = string
+#   default     = null
+#   description = "ARN of Lambda Authorizer. This is required if authorizer_type is set to TOKEN or REQUEST."
+# }
 
 variable "lambda_authorizer_uri" {
   type        = string
   default     = null
   description = "Uniform Resource Identifier (URI) of Lambda Authorizer. This is required if authorizer_type is set to TOKEN or REQUEST. This must be a well-formed Lambda function URI in the form of arn:aws:apigateway:{region}:lambda:path/{service_api}"
+}
+
+variable "lambda_authorizer_role_arn" {
+  type        = string
+  default     = null
+  description = "ARN of the IAM role for Lambda Authorizer. This is required if authorizer_type is set to TOKEN or REQUEST."
 }
 
 variable "tags" {
@@ -179,10 +185,20 @@ variable "api_key_required" {
   description = "Whether API key is required for accessing the API endpoints. If required, call endpoints with x-api-key header and a valid API key"
   type        = bool
   default     = false
-}  
+}
 
 variable "create_health_check" {
   description = "Whether to create a Route 53 health check for the API Gateway endpoint"
   type        = bool
   default     = false
+}
+
+variable "health_check_interval" {
+  description = "The number of seconds between the time that Route 53 gets a response from the endpoint for one health check and the time that it starts the next health check."
+  type        = number
+  default     = 10
+  validation {
+    condition     = contains([10, 30], var.health_check_interval)
+    error_message = "health_check_interval must be either 10 or 30 seconds"
+  }
 }
