@@ -1,5 +1,12 @@
+locals {
+  tables_count_need_post = length([
+    for _, table_info in var.dynamodb_tables : 1
+    if(strcontains(upper(try(table_info.allowed_operations, "")), "C"))
+  ])
+}
+
 data "archive_file" "lambda_for_post" {
-  count = (length(local.tables_need_post) > 0) ? 1 : 0
+  count = (local.tables_count_need_post > 0) ? 1 : 0
 
   depends_on = [data.aws_dynamodb_table.all_tables]
 
@@ -9,11 +16,11 @@ data "archive_file" "lambda_for_post" {
 }
 
 resource "aws_lambda_function" "lambda_for_post" {
-  count = (length(local.tables_need_post) > 0) ? 1 : 0
+  count = (local.tables_count_need_post > 0) ? 1 : 0
 
   filename         = "lambda-post.zip"
   function_name    = "${var.api_name}-function-post"
-  role             = aws_iam_role.dynamodb_access_role[0].arn
+  role             = local.role_to_access_tables
   handler          = "lambda-post.handler"
   runtime          = "nodejs24.x"
   source_code_hash = data.archive_file.lambda_for_post[0].output_base64sha256
@@ -26,7 +33,8 @@ resource "aws_lambda_function" "lambda_for_post" {
 }
 
 resource "aws_lambda_permission" "lambda_for_post" {
-  count      = (length(local.tables_need_post) > 0) ? 1 : 0
+  count      = (local.tables_count_need_post > 0) ? 1 : 0
+
   depends_on = [aws_lambda_function.lambda_for_post]
 
   statement_id  = "AllowExecutionFromAPIGateway"

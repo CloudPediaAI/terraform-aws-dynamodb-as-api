@@ -1,5 +1,12 @@
+locals {
+  tables_count_need_delete = length([
+    for _, table_info in var.dynamodb_tables : 1
+    if(strcontains(upper(try(table_info.allowed_operations, "")), "D"))
+  ])
+}
+
 data "archive_file" "lambda_for_delete" {
-  count = (length(local.tables_need_delete) > 0) ? 1 : 0
+  count = (local.tables_count_need_delete > 0) ? 1 : 0
 
   depends_on = [data.aws_dynamodb_table.all_tables]
 
@@ -9,7 +16,7 @@ data "archive_file" "lambda_for_delete" {
 }
 
 resource "aws_lambda_function" "lambda_for_delete" {
-  count = (length(local.tables_need_delete) > 0) ? 1 : 0
+  count = (local.tables_count_need_delete > 0) ? 1 : 0
 
   filename         = "lambda-delete.zip"
   function_name    = "${var.api_name}-function-delete"
@@ -20,7 +27,8 @@ resource "aws_lambda_function" "lambda_for_delete" {
 }
 
 resource "aws_lambda_permission" "lambda_for_delete" {
-  count      = (length(local.tables_need_delete) > 0) ? 1 : 0
+  count      = (local.tables_count_need_delete > 0) ? 1 : 0
+  
   depends_on = [aws_lambda_function.lambda_for_delete]
 
   statement_id  = "AllowExecutionFromAPIGateway"
