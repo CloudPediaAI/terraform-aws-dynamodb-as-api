@@ -37,6 +37,8 @@ locals {
 data "aws_iam_policy_document" "dynamodb_access_policy" {
   for_each = local.tables_need_endpoint
 
+  depends_on = [data.aws_dynamodb_table.all_tables]
+
   statement {
     sid = "Stm${replace(replace(each.key, "-", ""), "_", "")}"
     actions   = concat(

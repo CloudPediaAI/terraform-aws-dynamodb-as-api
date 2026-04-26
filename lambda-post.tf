@@ -1,6 +1,8 @@
 data "archive_file" "lambda_for_post" {
   count = (length(local.tables_need_post) > 0) ? 1 : 0
 
+  depends_on = [data.aws_dynamodb_table.all_tables]
+
   type        = "zip"
   source_file = "${path.module}/lambda-post.mjs"
   output_path = "lambda-post.zip"

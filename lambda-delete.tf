@@ -1,6 +1,8 @@
 data "archive_file" "lambda_for_delete" {
   count = (length(local.tables_need_delete) > 0) ? 1 : 0
 
+  depends_on = [data.aws_dynamodb_table.all_tables]
+
   type        = "zip"
   source_file = "${path.module}/lambda-delete.mjs"
   output_path = "lambda-delete.zip"

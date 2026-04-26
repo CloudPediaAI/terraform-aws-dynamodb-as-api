@@ -1,6 +1,8 @@
 data "archive_file" "lambda_for_put" {
   count = (length(local.tables_need_put) > 0) ? 1 : 0
 
+  depends_on = [data.aws_dynamodb_table.all_tables]
+
   type        = "zip"
   source_file = "${path.module}/lambda-put.mjs"
   output_path = "lambda-put.zip"
