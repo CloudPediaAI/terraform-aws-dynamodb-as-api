@@ -201,4 +201,33 @@ resource "aws_api_gateway_deployment" "main_deploy" {
   lifecycle {
     create_before_destroy = true
   }
+
+  depends_on = [
+    # Methods
+    aws_api_gateway_method.root_get,
+    aws_api_gateway_method.root_options,
+    aws_api_gateway_method.table_get,
+    aws_api_gateway_method.table_options,
+    aws_api_gateway_method.table_post,
+    aws_api_gateway_method.table_put,
+    aws_api_gateway_method.pkey_get,
+    aws_api_gateway_method.pkey_options,
+    aws_api_gateway_method.pkey_delete,
+    aws_api_gateway_method.skey_get,
+    aws_api_gateway_method.skey_options,
+    aws_api_gateway_method.skey_delete,
+    # Integrations
+    aws_api_gateway_integration.root_get_int,
+    aws_api_gateway_integration.root_options,
+    aws_api_gateway_integration.table_get_int,
+    aws_api_gateway_integration.table_options,
+    aws_api_gateway_integration.table_post_int,
+    aws_api_gateway_integration.table_put_int,
+    aws_api_gateway_integration.pkey_get_int,
+    aws_api_gateway_integration.pkey_options,
+    aws_api_gateway_integration.pkey_delete_int,
+    aws_api_gateway_integration.skey_get_int,
+    aws_api_gateway_integration.skey_options,
+    aws_api_gateway_integration.skey_delete_int,
+  ]
 }

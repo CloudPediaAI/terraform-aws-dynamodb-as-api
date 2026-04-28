@@ -20,7 +20,7 @@ resource "aws_lambda_function" "lambda_for_put" {
 
   filename         = "lambda-put.zip"
   function_name    = "${var.api_name}-function-put"
-  role             = aws_iam_role.dynamodb_access_role[0].arn
+  role             = local.role_to_access_tables
   handler          = "lambda-put.handler"
   runtime          = "nodejs24.x"
   source_code_hash = data.archive_file.lambda_for_put[0].output_base64sha256

@@ -20,7 +20,7 @@ resource "aws_lambda_function" "lambda_for_delete" {
 
   filename         = "lambda-delete.zip"
   function_name    = "${var.api_name}-function-delete"
-  role             = aws_iam_role.dynamodb_access_role[0].arn
+  role             = local.role_to_access_tables
   handler          = "lambda-delete.handler"
   runtime          = "nodejs24.x"
   source_code_hash = data.archive_file.lambda_for_delete[0].output_base64sha256
